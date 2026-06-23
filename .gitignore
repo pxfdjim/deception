@@ -1,0 +1,5 @@
+__pycache__/
+exper_model/
+experiments/
+figures/
+data_for_plot/
