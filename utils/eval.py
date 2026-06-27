@@ -66,7 +66,11 @@ def evaluate_model(model, test_loader, criterion, args):
     total_loss = 0.0
     num_batches = 0
     
-    test_loader_tqdm = tqdm(test_loader, desc="Evaluating")
+    test_loader_tqdm = tqdm(
+        test_loader,
+        desc="Evaluating",
+        disable=getattr(args, "disable_tqdm", False)
+    )
     
     with torch.no_grad():
         for visual_list, audio_list, bag_labels, _ in test_loader_tqdm:
@@ -96,6 +100,40 @@ def evaluate_model(model, test_loader, criterion, args):
     # 计算平均损失
     avg_loss = total_loss / num_batches if num_batches > 0 else 0.0
 
+    threshold = 0.5
+    if getattr(args, 'use_eval_threshold_search', False):
+        start = getattr(args, 'eval_threshold_min', 0.2)
+        end = getattr(args, 'eval_threshold_max', 0.8)
+        step = getattr(args, 'eval_threshold_step', 0.01)
+        thresholds = np.arange(start, end + 1e-9, step)
+        objective = getattr(args, 'eval_threshold_objective', 'acc_f1')
+        candidates = []
+        for candidate in thresholds:
+            candidate_preds = (np.array(all_probs) > candidate).astype(int)
+            candidate_acc = metrics.accuracy_score(all_labels, candidate_preds)
+            _, _, candidate_f1, _ = metrics.precision_recall_fscore_support(
+                all_labels, candidate_preds, average='binary', zero_division=0
+            )
+            candidates.append((candidate_acc, candidate_f1, float(candidate), candidate_preds))
+
+        if objective == 'acc_tolerant_f1' and candidates:
+            best_acc = max(item[0] for item in candidates)
+            tolerance = float(getattr(args, 'eval_threshold_acc_tolerance', 0.0))
+            candidates = [item for item in candidates if item[0] >= best_acc - tolerance]
+
+        best_key = None
+        best_preds = all_preds
+        for candidate_acc, candidate_f1, candidate, candidate_preds in candidates:
+            if objective == 'acc_tolerant_f1':
+                key = (candidate_f1, candidate_acc, -abs(candidate - 0.5))
+            else:
+                key = (candidate_acc, candidate_f1, -abs(candidate - 0.5))
+            if best_key is None or key > best_key:
+                best_key = key
+                best_preds = candidate_preds
+                threshold = float(candidate)
+        all_preds = list(best_preds)
+
     # 计算指标
     accuracy = metrics.accuracy_score(all_labels, all_preds)
     precision, recall, f1, _ = metrics.precision_recall_fscore_support(
@@ -116,6 +154,8 @@ def evaluate_model(model, test_loader, criterion, args):
     print(f"   Recall:    {recall:.4f}")
     print(f"   F1-Score:  {f1:.4f}")
     print(f"   AUC:       {auc:.4f}")
+    if getattr(args, 'use_eval_threshold_search', False):
+        print(f"   Threshold: {threshold:.3f}")
     
     return {
         'val_loss': avg_loss, # 返回 Loss
@@ -123,7 +163,8 @@ def evaluate_model(model, test_loader, criterion, args):
         'precision': precision, 
         'recall': recall,
         'f1': f1, 
-        'auc': auc
+        'auc': auc,
+        'threshold': threshold
     }
 
 

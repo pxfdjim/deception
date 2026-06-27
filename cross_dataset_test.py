@@ -75,6 +75,13 @@ class ExperimentOptions:
     visual_dim: int = 768
     audio_dim: int = 1024
     num_classes: int = 2
+    use_visual_self_attn: bool = False
+    visual_self_attn_heads: int = 4
+    visual_self_attn_layers: int = 1
+    visual_self_attn_dropout: float = 0.1
+    use_instance_loss: bool = True
+    instance_loss_weight: float = 0.1
+    positive_instance_topk_ratio: float = 0.25
 
 
 class DomainDataset(Dataset):
@@ -289,6 +296,39 @@ def _move_feature_list(features: Iterable[torch.Tensor], device: torch.device) -
     return [feature.to(device, non_blocking=True) for feature in features]
 
 
+def weak_instance_loss(
+    instance_logits_list: Sequence[torch.Tensor],
+    labels: torch.Tensor,
+    topk_ratio: float,
+) -> torch.Tensor:
+    losses: list[torch.Tensor] = []
+    for instance_logits, label in zip(instance_logits_list, labels):
+        if instance_logits.numel() == 0:
+            continue
+
+        if int(label.item()) == 0:
+            pseudo_labels = torch.zeros(
+                instance_logits.size(0),
+                dtype=torch.long,
+                device=instance_logits.device,
+            )
+            losses.append(F.cross_entropy(instance_logits, pseudo_labels))
+        else:
+            num_pos = max(1, int(round(instance_logits.size(0) * topk_ratio)))
+            lie_scores = F.softmax(instance_logits.detach(), dim=-1)[:, 1]
+            top_indices = torch.topk(lie_scores, k=min(num_pos, instance_logits.size(0))).indices
+            pseudo_labels = torch.ones(
+                top_indices.size(0),
+                dtype=torch.long,
+                device=instance_logits.device,
+            )
+            losses.append(F.cross_entropy(instance_logits[top_indices], pseudo_labels))
+
+    if not losses:
+        return torch.tensor(0.0, device=labels.device)
+    return torch.stack(losses).mean()
+
+
 def train_one_epoch(
     model: nn.Module,
     loader: DataLoader,
@@ -302,6 +342,7 @@ def train_one_epoch(
     total_loss = 0.0
     total_ce = 0.0
     total_ortho = 0.0
+    total_instance = 0.0
     total_samples = 0
 
     progress = tqdm(loader, desc=f"Epoch {epoch + 1}/{options.epochs} training")
@@ -313,7 +354,18 @@ def train_one_epoch(
         outputs = model(visual_list, audio_list, bag_labels=labels)
         ce_loss = criterion(outputs["logits"], labels)
         ortho_loss = outputs.get("ortho_loss", torch.tensor(0.0, device=device))
-        loss = ce_loss + options.ortho_weight * ortho_loss
+        instance_loss = torch.tensor(0.0, device=device)
+        if options.use_instance_loss and "instance_logits_list" in outputs:
+            instance_loss = weak_instance_loss(
+                outputs["instance_logits_list"],
+                labels,
+                options.positive_instance_topk_ratio,
+            )
+        loss = (
+            ce_loss
+            + options.ortho_weight * ortho_loss
+            + options.instance_loss_weight * instance_loss
+        )
 
         optimizer.zero_grad()
         loss.backward()
@@ -325,12 +377,14 @@ def train_one_epoch(
         total_loss += loss.item() * batch_size
         total_ce += ce_loss.item() * batch_size
         total_ortho += ortho_loss.item() * batch_size
+        total_instance += instance_loss.item() * batch_size
         progress.set_postfix(loss=f"{total_loss / total_samples:.4f}")
 
     return {
         "loss": total_loss / max(total_samples, 1),
         "ce_loss": total_ce / max(total_samples, 1),
         "ortho_loss": total_ortho / max(total_samples, 1),
+        "instance_loss": total_instance / max(total_samples, 1),
     }
 
 
@@ -419,6 +473,17 @@ def _save_results(
     )
     with (experiment_dir / "test_metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2, ensure_ascii=False)
+    with (experiment_dir / "run_config.json").open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "target_dataset": target_name,
+                "source_datasets": list(source_names),
+                "options": asdict(options),
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
     with (experiment_dir / "test_predictions.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["id", "label", "prediction", "lie_probability"])
         writer.writeheader()
@@ -439,6 +504,19 @@ def run_cross_dataset_experiment(target_name: str, options: ExperimentOptions | 
     print(f"Sources: {' + '.join(source_names)}")
     print(f"Held-out test dataset: {target_name}")
     print("Protocol: target samples are used only for the final test")
+    print(
+        "Visual self-attention: "
+        f"enabled={options.use_visual_self_attn}, "
+        f"heads={options.visual_self_attn_heads}, "
+        f"layers={options.visual_self_attn_layers}, "
+        f"dropout={options.visual_self_attn_dropout}"
+    )
+    print(
+        "Weak instance loss: "
+        f"enabled={options.use_instance_loss}, "
+        f"weight={options.instance_loss_weight}, "
+        f"positive_topk_ratio={options.positive_instance_topk_ratio}"
+    )
     print("=" * 80)
 
     source_datasets = [build_full_dataset(name) for name in source_names]
@@ -508,7 +586,9 @@ def run_cross_dataset_experiment(target_name: str, options: ExperimentOptions | 
         train_metrics = train_one_epoch(model, train_loader, criterion, optimizer, device, options, epoch)
         print(
             f"  Epoch {epoch + 1:03d}: loss={train_metrics['loss']:.4f}, "
-            f"ce={train_metrics['ce_loss']:.4f}, ortho={train_metrics['ortho_loss']:.4f}"
+            f"ce={train_metrics['ce_loss']:.4f}, "
+            f"inst={train_metrics['instance_loss']:.4f}, "
+            f"ortho={train_metrics['ortho_loss']:.4f}"
         )
 
     print("\nFinal held-out target evaluation")
@@ -553,7 +633,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ortho-weight", type=float, default=0.1)
     parser.add_argument("--output-dir", default="exper_model/cross_dataset")
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--use-visual-self-attn", action="store_true")
+    parser.add_argument("--visual-self-attn-heads", type=int, default=4)
+    parser.add_argument("--visual-self-attn-layers", type=int, default=1)
+    parser.add_argument("--visual-self-attn-dropout", type=float, default=0.1)
+    parser.add_argument("--no-instance-loss", dest="use_instance_loss", action="store_false")
+    parser.add_argument("--instance-loss-weight", type=float, default=0.1)
+    parser.add_argument("--positive-instance-topk-ratio", type=float, default=0.25)
     parser.add_argument("--dry-run", action="store_true")
+    parser.set_defaults(use_instance_loss=True)
     return parser.parse_args()
 
 
@@ -574,6 +662,13 @@ def main() -> None:
         output_dir=args.output_dir,
         device=args.device,
         dry_run=args.dry_run,
+        use_visual_self_attn=args.use_visual_self_attn,
+        visual_self_attn_heads=args.visual_self_attn_heads,
+        visual_self_attn_layers=args.visual_self_attn_layers,
+        visual_self_attn_dropout=args.visual_self_attn_dropout,
+        use_instance_loss=args.use_instance_loss,
+        instance_loss_weight=args.instance_loss_weight,
+        positive_instance_topk_ratio=args.positive_instance_topk_ratio,
     )
     targets = DATASET_NAMES if args.target == "all" else (args.target,)
     for target_name in targets:

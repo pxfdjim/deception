@@ -96,6 +96,39 @@ class Args:
         self.hidden_dim = 768     # 隐藏层维度
         self.low_dim = 128        # 对比学习特征维度
         self.num_classes = 2      # 二分类：真话/谎言
+        self.use_instance_loss = True
+        self.instance_loss_weight = 0.1
+        self.positive_instance_topk_ratio = 0.25
+        self.use_topk_proto_update = False
+        self.use_conservative_topk_proto_update = False
+        self.topk_proto_ratio = 0.25
+        self.topk_proto_threshold = 0.6
+        self.topk_proto_warmup_epochs = 10
+        self.proto_sep_margin = 0.2
+        self.proto_sep_loss_weight = 0.05
+        self.use_cluster_topk_mean_pooling = False
+        self.cluster_topk_mean_ratio = 0.5
+        self.use_visual_logit_ensemble = False
+        self.visual_logit_ensemble_weight = 0.3
+        self.use_audio_residual_drop = False
+        self.audio_residual_drop_prob = 0.3
+        self.use_visual_aux_loss = False
+        self.visual_aux_loss_weight = 0.2
+        self.visual_aux_loss_warmup_epochs = 0
+        self.use_fusion_consistency_loss = False
+        self.fusion_consistency_loss_weight = 0.05
+        self.fusion_consistency_temperature = 2.0
+        self.fusion_consistency_warmup_epochs = 0
+        self.use_mil_evidence_loss = False
+        self.mil_evidence_loss_weight = 0.1
+        self.mil_evidence_topk_ratio = 0.25
+        self.mil_evidence_rank_weight = 0.05
+        self.mil_evidence_rank_margin = 0.5
+        self.mil_evidence_warmup_epochs = 0
+        self.use_eval_threshold_search = False
+        self.eval_threshold_min = 0.2
+        self.eval_threshold_max = 0.8
+        self.eval_threshold_step = 0.01
         self.momentum = 0.9
 
 
@@ -108,6 +141,20 @@ class Args:
         self.batch_size = 8       # 小批次适应数据集大小
         self.lr = 0.001           # 学习率
         self.weight_decay = 5e-6
+        self.label_smoothing = 0.0
+        self.lie_class_weight = 1.5
+        self.use_logit_margin_regularization = False
+        self.logit_margin_weight = 0.02
+        self.logit_margin_target = 3.0
+        self.logit_margin_warmup_epochs = 10
+        self.use_batch_rank_loss = False
+        self.batch_rank_loss_weight = 0.05
+        self.batch_rank_margin = 0.5
+        self.batch_rank_warmup_epochs = 5
+        self.use_model_ema = False
+        self.model_ema_decay = 0.995
+        self.model_ema_start_epoch = 10
+        self.use_ema_dual_eval = False
 
         self.aggr_method = 'hierarchical_max'  # 层次聚合方法: 'hierarchical_mean', 'mean', 'max'
         # 学习率调度

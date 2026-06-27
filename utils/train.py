@@ -75,6 +75,79 @@ def focal_loss(logits, targets, alpha=0.25, gamma=2.0):
     return focal_loss.mean()
 
 
+def weak_instance_loss(instance_logits_list, bag_labels, topk_ratio=0.25):
+    losses = []
+    for instance_logits, bag_label in zip(instance_logits_list, bag_labels):
+        if instance_logits.numel() == 0:
+            continue
+
+        if int(bag_label.item()) == 0:
+            pseudo_labels = torch.zeros(
+                instance_logits.size(0),
+                dtype=torch.long,
+                device=instance_logits.device
+            )
+            losses.append(F.cross_entropy(instance_logits, pseudo_labels))
+        else:
+            num_pos = max(1, int(round(instance_logits.size(0) * topk_ratio)))
+            lie_scores = F.softmax(instance_logits.detach(), dim=-1)[:, 1]
+            top_indices = torch.topk(lie_scores, k=min(num_pos, instance_logits.size(0))).indices
+            pseudo_labels = torch.ones(
+                top_indices.size(0),
+                dtype=torch.long,
+                device=instance_logits.device
+            )
+            losses.append(F.cross_entropy(instance_logits[top_indices], pseudo_labels))
+
+    if not losses:
+        device = bag_labels.device if torch.is_tensor(bag_labels) else "cuda"
+        return torch.tensor(0.0, device=device)
+    return torch.stack(losses).mean()
+
+
+def mil_evidence_loss(
+    instance_logits_list,
+    bag_labels,
+    topk_ratio=0.25,
+    rank_margin=0.5,
+    rank_weight=0.05,
+):
+    bag_logits = []
+    targets = []
+    rank_losses = []
+
+    for instance_logits, bag_label in zip(instance_logits_list, bag_labels):
+        if instance_logits.numel() == 0:
+            continue
+
+        lie_scores = instance_logits[:, 1] - instance_logits[:, 0]
+        num_top = max(1, int(round(lie_scores.numel() * topk_ratio)))
+        num_top = min(num_top, lie_scores.numel())
+        top_scores = torch.topk(lie_scores, k=num_top, largest=True).values
+        bag_logits.append(top_scores.mean())
+        targets.append(bag_label.to(dtype=lie_scores.dtype))
+
+        if int(bag_label.item()) == 1 and lie_scores.numel() >= 2:
+            num_bottom = min(num_top, lie_scores.numel() - num_top)
+            if num_bottom > 0:
+                bottom_scores = torch.topk(lie_scores, k=num_bottom, largest=False).values
+                rank_losses.append(F.relu(rank_margin - (top_scores.mean() - bottom_scores.mean())))
+
+    if not bag_logits:
+        device = bag_labels.device if torch.is_tensor(bag_labels) else "cuda"
+        zero = torch.tensor(0.0, device=device)
+        return zero, zero
+
+    bag_logits = torch.stack(bag_logits)
+    targets = torch.stack(targets).to(device=bag_logits.device)
+    evidence_loss = F.binary_cross_entropy_with_logits(bag_logits, targets)
+    if rank_losses and rank_weight > 0:
+        rank_loss = torch.stack(rank_losses).mean()
+    else:
+        rank_loss = torch.tensor(0.0, device=bag_logits.device)
+    return evidence_loss + float(rank_weight) * rank_loss, rank_loss
+
+
 def train_new(model, train_loader, criterion_bc, optimizer, epoch, args):
     """
     训练一个epoch（优化版：移除KL损失，添加实例级监督）
@@ -95,7 +168,11 @@ def train_new(model, train_loader, criterion_bc, optimizer, epoch, args):
     bag_losses = AverageMeter('BagLoss', ':.4e')
     ins_losses = AverageMeter('InsLoss', ':.4e')
     
-    train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs} Training")
+    train_loader_tqdm = tqdm(
+        train_loader,
+        desc=f"Epoch {epoch+1}/{args.epochs} Training",
+        disable=getattr(args, "disable_tqdm", False)
+    )
     
     # Warmup学习率
     if hasattr(args, 'warmup_epochs') and args.warmup_epochs > 0 and epoch < args.warmup_epochs:
@@ -485,14 +562,32 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
     DataLoader 返回 4-tuple: (visual_list, audio_list, bag_labels, names)
     """
     model.train()
+    model.current_epoch = epoch
     
     # 用多个 Meter 分别记录各项 Loss，方便排查问题
     losses = AverageMeter('Loss', ':.4e')
     losses_cls = AverageMeter('Loss_Cls', ':.4e')
     # losses_aux = AverageMeter('Loss_Aux', ':.4e')
     losses_ort = AverageMeter('Loss_Ort', ':.4e')
+    losses_inst = AverageMeter('Loss_Inst', ':.4e')
+    losses_sep = AverageMeter('Loss_Sep', ':.4e')
+    losses_loop = AverageMeter('Loss_Loop', ':.4e')
+    losses_margin = AverageMeter('Loss_Margin', ':.4e')
+    losses_rank = AverageMeter('Loss_Rank', ':.4e')
+    losses_vaux = AverageMeter('Loss_VAux', ':.4e')
+    losses_fcons = AverageMeter('Loss_FCons', ':.4e')
+    losses_mil = AverageMeter('Loss_MIL', ':.4e')
+    losses_mil_rank = AverageMeter('Loss_MILRank', ':.4e')
+    instance_loss_weight = getattr(args, 'instance_loss_weight', 0.1)
+    positive_instance_topk_ratio = getattr(args, 'positive_instance_topk_ratio', 0.25)
+    proto_sep_loss_weight = getattr(args, 'proto_sep_loss_weight', 0.1)
+    proto_loop_loss_weight = getattr(args, 'proto_loop_loss_weight', 0.05)
 
-    train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs} Training")
+    train_loader_tqdm = tqdm(
+        train_loader,
+        desc=f"Epoch {epoch+1}/{args.epochs} Training",
+        disable=getattr(args, "disable_tqdm", False)
+    )
 
     for batch_idx, (visual_list, audio_list, bag_labels, _) in enumerate(train_loader_tqdm):
         visual_list = _to_cuda(visual_list)
@@ -505,7 +600,8 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
         # ==========================================
         # 1. 计算主分类 Loss
         # ==========================================
-        total_loss = criterion_bc(outputs['logits'], bag_labels)
+        ce_loss = criterion_bc(outputs['logits'], bag_labels)
+        total_loss = ce_loss
         
         # 2. 计算正交正则化 Loss (如果存在)
         ortho_loss = torch.tensor(0.0, device=bag_labels.device)
@@ -514,7 +610,92 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
             ortho_weight = getattr(args, 'ortho_weight', 0.1)
             total_loss = total_loss + ortho_weight * ortho_loss
 
- 
+        instance_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_instance_loss', True) and 'instance_logits_list' in outputs:
+            instance_loss = weak_instance_loss(
+                outputs['instance_logits_list'],
+                bag_labels,
+                topk_ratio=positive_instance_topk_ratio
+            )
+            total_loss = total_loss + instance_loss_weight * instance_loss
+
+        proto_sep_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_topk_proto_update', False) and 'proto_sep_loss' in outputs:
+            proto_sep_loss = outputs['proto_sep_loss']
+            total_loss = total_loss + proto_sep_loss_weight * proto_sep_loss
+
+        proto_loop_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_proto_loop_consistency', False) and 'proto_loop_loss' in outputs:
+            proto_loop_loss = outputs['proto_loop_loss']
+            total_loss = total_loss + proto_loop_loss_weight * proto_loop_loss
+
+        logit_margin_loss = torch.tensor(0.0, device=bag_labels.device)
+        margin_warmup_epochs = getattr(args, 'logit_margin_warmup_epochs', 10)
+        if (
+            getattr(args, 'use_logit_margin_regularization', False)
+            and epoch >= margin_warmup_epochs
+        ):
+            logits = outputs['logits']
+            target_margin = float(getattr(args, 'logit_margin_target', 3.0))
+            logit_margins = torch.abs(logits[:, 1] - logits[:, 0])
+            logit_margin_loss = F.relu(logit_margins - target_margin).pow(2).mean()
+            total_loss = total_loss + float(getattr(args, 'logit_margin_weight', 0.02)) * logit_margin_loss
+
+        batch_rank_loss = torch.tensor(0.0, device=bag_labels.device)
+        rank_warmup_epochs = getattr(args, 'batch_rank_warmup_epochs', 5)
+        if getattr(args, 'use_batch_rank_loss', False) and epoch >= rank_warmup_epochs:
+            lie_scores = outputs['logits'][:, 1] - outputs['logits'][:, 0]
+            pos_scores = lie_scores[bag_labels == 1]
+            neg_scores = lie_scores[bag_labels == 0]
+            if pos_scores.numel() > 0 and neg_scores.numel() > 0:
+                rank_margin = float(getattr(args, 'batch_rank_margin', 0.5))
+                pairwise_gap = pos_scores.unsqueeze(1) - neg_scores.unsqueeze(0)
+                batch_rank_loss = F.relu(rank_margin - pairwise_gap).mean()
+                total_loss = total_loss + float(getattr(args, 'batch_rank_loss_weight', 0.05)) * batch_rank_loss
+
+        visual_aux_loss = torch.tensor(0.0, device=bag_labels.device)
+        visual_aux_warmup = getattr(args, 'visual_aux_loss_warmup_epochs', 0)
+        if (
+            getattr(args, 'use_visual_aux_loss', False)
+            and epoch >= visual_aux_warmup
+            and 'visual_logits' in outputs
+        ):
+            visual_aux_loss = criterion_bc(outputs['visual_logits'], bag_labels)
+            total_loss = total_loss + float(getattr(args, 'visual_aux_loss_weight', 0.2)) * visual_aux_loss
+
+        fusion_consistency_loss = torch.tensor(0.0, device=bag_labels.device)
+        consistency_warmup = getattr(args, 'fusion_consistency_warmup_epochs', 0)
+        if (
+            getattr(args, 'use_fusion_consistency_loss', False)
+            and epoch >= consistency_warmup
+            and 'visual_logits' in outputs
+        ):
+            temperature = max(float(getattr(args, 'fusion_consistency_temperature', 2.0)), 1e-6)
+            fused_log_probs = F.log_softmax(outputs['logits'] / temperature, dim=-1)
+            visual_probs = F.softmax(outputs['visual_logits'].detach() / temperature, dim=-1)
+            fusion_consistency_loss = F.kl_div(
+                fused_log_probs,
+                visual_probs,
+                reduction='batchmean'
+            ) * (temperature ** 2)
+            total_loss = total_loss + float(getattr(args, 'fusion_consistency_loss_weight', 0.05)) * fusion_consistency_loss
+
+        mil_loss = torch.tensor(0.0, device=bag_labels.device)
+        mil_rank_loss = torch.tensor(0.0, device=bag_labels.device)
+        mil_warmup = getattr(args, 'mil_evidence_warmup_epochs', 0)
+        if (
+            getattr(args, 'use_mil_evidence_loss', False)
+            and epoch >= mil_warmup
+            and 'instance_logits_list' in outputs
+        ):
+            mil_loss, mil_rank_loss = mil_evidence_loss(
+                outputs['instance_logits_list'],
+                bag_labels,
+                topk_ratio=getattr(args, 'mil_evidence_topk_ratio', 0.25),
+                rank_margin=getattr(args, 'mil_evidence_rank_margin', 0.5),
+                rank_weight=getattr(args, 'mil_evidence_rank_weight', 0.05),
+            )
+            total_loss = total_loss + float(getattr(args, 'mil_evidence_loss_weight', 0.1)) * mil_loss
 
         # # ==========================================
         # # 3. 计算特征正交正则化 Loss (Orthogonal Loss)
@@ -547,19 +728,60 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
 
         # 更新统计
         losses.update(total_loss.item(), B)
+        losses_cls.update(ce_loss.item(), B)
         if isinstance(ortho_loss, torch.Tensor) and ortho_loss.item() > 0:
             losses_ort.update(ortho_loss.item(), B)
+        if isinstance(instance_loss, torch.Tensor) and instance_loss.item() > 0:
+            losses_inst.update(instance_loss.item(), B)
+        if isinstance(proto_sep_loss, torch.Tensor) and proto_sep_loss.item() > 0:
+            losses_sep.update(proto_sep_loss.item(), B)
+        if isinstance(proto_loop_loss, torch.Tensor) and proto_loop_loss.item() > 0:
+            losses_loop.update(proto_loop_loss.item(), B)
+        if isinstance(logit_margin_loss, torch.Tensor) and logit_margin_loss.item() > 0:
+            losses_margin.update(logit_margin_loss.item(), B)
+        if isinstance(batch_rank_loss, torch.Tensor) and batch_rank_loss.item() > 0:
+            losses_rank.update(batch_rank_loss.item(), B)
+        if isinstance(visual_aux_loss, torch.Tensor) and visual_aux_loss.item() > 0:
+            losses_vaux.update(visual_aux_loss.item(), B)
+        if isinstance(fusion_consistency_loss, torch.Tensor) and fusion_consistency_loss.item() > 0:
+            losses_fcons.update(fusion_consistency_loss.item(), B)
+        if isinstance(mil_loss, torch.Tensor) and mil_loss.item() > 0:
+            losses_mil.update(mil_loss.item(), B)
+        if isinstance(mil_rank_loss, torch.Tensor) and mil_rank_loss.item() > 0:
+            losses_mil_rank.update(mil_rank_loss.item(), B)
 
         # 在进度条里拆分显示，让你对网络内部状态一目了然
-        train_loader_tqdm.set_postfix({
-            'Tot': f"{losses.avg:.3f}",
-        })
+        if not getattr(args, "disable_tqdm", False):
+            train_loader_tqdm.set_postfix({
+                'Tot': f"{losses.avg:.3f}",
+                'CE': f"{losses_cls.avg:.3f}",
+                'Inst': f"{losses_inst.avg:.3f}",
+                'Sep': f"{losses_sep.avg:.3f}",
+                'Loop': f"{losses_loop.avg:.3f}",
+                'Ort': f"{losses_ort.avg:.3f}",
+                'Margin': f"{losses_margin.avg:.3f}",
+                'Rank': f"{losses_rank.avg:.3f}",
+                'MIL': f"{losses_mil.avg:.3f}",
+                'MILR': f"{losses_mil_rank.avg:.3f}",
+                'VAux': f"{losses_vaux.avg:.3f}",
+                'FCons': f"{losses_fcons.avg:.3f}",
+            })
 
     train_loader_tqdm.close()
     
     return {
         'train_loss': losses.avg,
-        'ortho_loss': losses_ort.avg
+        'ce_loss': losses_cls.avg,
+        'instance_loss': losses_inst.avg,
+        'proto_sep_loss': losses_sep.avg,
+        'proto_loop_loss': losses_loop.avg,
+        'ortho_loss': losses_ort.avg,
+        'logit_margin_loss': losses_margin.avg,
+        'batch_rank_loss': losses_rank.avg,
+        'mil_evidence_loss': losses_mil.avg,
+        'mil_evidence_rank_loss': losses_mil_rank.avg,
+        'visual_aux_loss': losses_vaux.avg,
+        'fusion_consistency_loss': losses_fcons.avg
     }
 
 
@@ -830,12 +1052,20 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         dict: 包含训练指标的字典
     """
     model.train()
+    model.current_epoch = epoch
     
     losses = AverageMeter('Loss', ':.4e')
     ce_losses = AverageMeter('CELoss', ':.4e')
     ortho_losses = AverageMeter('OrthoLoss', ':.4e')
+    instance_losses = AverageMeter('InstanceLoss', ':.4e')
+    proto_sep_losses = AverageMeter('ProtoSepLoss', ':.4e')
+    proto_loop_losses = AverageMeter('ProtoLoopLoss', ':.4e')
     
     ortho_weight = getattr(args, 'ortho_weight', 0.1)
+    instance_loss_weight = getattr(args, 'instance_loss_weight', 0.1)
+    positive_instance_topk_ratio = getattr(args, 'positive_instance_topk_ratio', 0.25)
+    proto_sep_loss_weight = getattr(args, 'proto_sep_loss_weight', 0.1)
+    proto_loop_loss_weight = getattr(args, 'proto_loop_loss_weight', 0.05)
     
     train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs} Training")
     
@@ -855,9 +1085,30 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         ortho_loss = torch.tensor(0.0, device='cuda')
         if 'ortho_loss' in outputs:
             ortho_loss = outputs['ortho_loss']
+
+        instance_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_instance_loss', True) and 'instance_logits_list' in outputs:
+            instance_loss = weak_instance_loss(
+                outputs['instance_logits_list'],
+                bag_labels,
+                topk_ratio=positive_instance_topk_ratio
+            )
+
+        proto_sep_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_topk_proto_update', False) and 'proto_sep_loss' in outputs:
+            proto_sep_loss = outputs['proto_sep_loss']
+
+        proto_loop_loss = torch.tensor(0.0, device=bag_labels.device)
+        if getattr(args, 'use_proto_loop_consistency', False) and 'proto_loop_loss' in outputs:
+            proto_loop_loss = outputs['proto_loop_loss']
         
         # 总损失
-        total_loss = ce_loss 
+        total_loss = (
+            ce_loss
+            + instance_loss_weight * instance_loss
+            + proto_sep_loss_weight * proto_sep_loss
+            + proto_loop_loss_weight * proto_loop_loss
+        )
         # + ortho_weight * ortho_loss
         
         # 反向传播
@@ -871,12 +1122,22 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         ce_losses.update(ce_loss.item(), B)
         if isinstance(ortho_loss, torch.Tensor) and ortho_loss.item() > 0:
             ortho_losses.update(ortho_loss.item(), B)
+        if isinstance(instance_loss, torch.Tensor) and instance_loss.item() > 0:
+            instance_losses.update(instance_loss.item(), B)
+        if isinstance(proto_sep_loss, torch.Tensor) and proto_sep_loss.item() > 0:
+            proto_sep_losses.update(proto_sep_loss.item(), B)
+        if isinstance(proto_loop_loss, torch.Tensor) and proto_loop_loss.item() > 0:
+            proto_loop_losses.update(proto_loop_loss.item(), B)
         
-        train_loader_tqdm.set_postfix(
-            Loss=f"{losses.avg:.4f}",
-            CE=f"{ce_losses.avg:.4f}",
-            Ortho=f"{ortho_losses.avg:.4f}"
-        )
+        if not getattr(args, "disable_tqdm", False):
+            train_loader_tqdm.set_postfix(
+                Loss=f"{losses.avg:.4f}",
+                CE=f"{ce_losses.avg:.4f}",
+                Inst=f"{instance_losses.avg:.4f}",
+                Sep=f"{proto_sep_losses.avg:.4f}",
+                Loop=f"{proto_loop_losses.avg:.4f}",
+                Ortho=f"{ortho_losses.avg:.4f}"
+            )
     
     train_loader_tqdm.close()
     
@@ -884,5 +1145,8 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         'train_loss': losses.avg,
         'total_loss': losses.avg,
         'ce_loss': ce_losses.avg,
+        'instance_loss': instance_losses.avg,
+        'proto_sep_loss': proto_sep_losses.avg,
+        'proto_loop_loss': proto_loop_losses.avg,
         'ortho_loss': ortho_losses.avg,
     }

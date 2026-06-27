@@ -27,6 +27,22 @@ class Args:
         self.hidden_dim = 256           # 适中的隐藏层（不要太大也不要太小）
         self.low_dim = 64               # 适中的embedding维度
         self.num_classes = 2            # 二分类：真话/谎言
+        self.use_instance_loss = True
+        self.instance_loss_weight = 0.1
+        self.positive_instance_topk_ratio = 0.25
+        self.use_topk_proto_update = False
+        self.use_conservative_topk_proto_update = False
+        self.topk_proto_ratio = 0.25
+        self.topk_proto_threshold = 0.6
+        self.topk_proto_warmup_epochs = 10
+        self.proto_sep_margin = 0.2
+        self.proto_sep_loss_weight = 0.05
+        self.use_cluster_topk_mean_pooling = False
+        self.cluster_topk_mean_ratio = 0.5
+        self.use_visual_logit_ensemble = False
+        self.visual_logit_ensemble_weight = 0.3
+        self.use_audio_residual_drop = False
+        self.audio_residual_drop_prob = 0.3
         
         
         # 训练参数
@@ -49,6 +65,18 @@ class Args:
         self.seed = 42
         self.num_runs = 5
         self.optimizer = "sgd"           # 明确设置为SGD
+        self.eval_every = 1
+        self.use_eval_threshold_search = False
+        self.eval_threshold_min = 0.2
+        self.eval_threshold_max = 0.8
+        self.eval_threshold_step = 0.01
+        self.eval_threshold_objective = "acc_f1"
+        self.eval_threshold_acc_tolerance = 0.0
+        self.best_epoch_objective = "acc_f1"
+        self.best_epoch_acc_tolerance = 0.0
+        self.early_stop_patience = 0
+        self.early_stop_min_epochs = 0
+        self.disable_tqdm = False
   
         
         # 保存路径
