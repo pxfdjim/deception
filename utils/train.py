@@ -570,7 +570,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
     # losses_aux = AverageMeter('Loss_Aux', ':.4e')
     losses_ort = AverageMeter('Loss_Ort', ':.4e')
     losses_inst = AverageMeter('Loss_Inst', ':.4e')
-    losses_sep = AverageMeter('Loss_Sep', ':.4e')
     losses_loop = AverageMeter('Loss_Loop', ':.4e')
     losses_margin = AverageMeter('Loss_Margin', ':.4e')
     losses_rank = AverageMeter('Loss_Rank', ':.4e')
@@ -580,7 +579,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
     losses_mil_rank = AverageMeter('Loss_MILRank', ':.4e')
     instance_loss_weight = getattr(args, 'instance_loss_weight', 0.1)
     positive_instance_topk_ratio = getattr(args, 'positive_instance_topk_ratio', 0.25)
-    proto_sep_loss_weight = getattr(args, 'proto_sep_loss_weight', 0.1)
     proto_loop_loss_weight = getattr(args, 'proto_loop_loss_weight', 0.05)
 
     train_loader_tqdm = tqdm(
@@ -618,11 +616,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
                 topk_ratio=positive_instance_topk_ratio
             )
             total_loss = total_loss + instance_loss_weight * instance_loss
-
-        proto_sep_loss = torch.tensor(0.0, device=bag_labels.device)
-        if getattr(args, 'use_topk_proto_update', False) and 'proto_sep_loss' in outputs:
-            proto_sep_loss = outputs['proto_sep_loss']
-            total_loss = total_loss + proto_sep_loss_weight * proto_sep_loss
 
         proto_loop_loss = torch.tensor(0.0, device=bag_labels.device)
         if getattr(args, 'use_proto_loop_consistency', False) and 'proto_loop_loss' in outputs:
@@ -733,8 +726,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
             losses_ort.update(ortho_loss.item(), B)
         if isinstance(instance_loss, torch.Tensor) and instance_loss.item() > 0:
             losses_inst.update(instance_loss.item(), B)
-        if isinstance(proto_sep_loss, torch.Tensor) and proto_sep_loss.item() > 0:
-            losses_sep.update(proto_sep_loss.item(), B)
         if isinstance(proto_loop_loss, torch.Tensor) and proto_loop_loss.item() > 0:
             losses_loop.update(proto_loop_loss.item(), B)
         if isinstance(logit_margin_loss, torch.Tensor) and logit_margin_loss.item() > 0:
@@ -756,7 +747,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
                 'Tot': f"{losses.avg:.3f}",
                 'CE': f"{losses_cls.avg:.3f}",
                 'Inst': f"{losses_inst.avg:.3f}",
-                'Sep': f"{losses_sep.avg:.3f}",
                 'Loop': f"{losses_loop.avg:.3f}",
                 'Ort': f"{losses_ort.avg:.3f}",
                 'Margin': f"{losses_margin.avg:.3f}",
@@ -773,7 +763,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
         'train_loss': losses.avg,
         'ce_loss': losses_cls.avg,
         'instance_loss': losses_inst.avg,
-        'proto_sep_loss': losses_sep.avg,
         'proto_loop_loss': losses_loop.avg,
         'ortho_loss': losses_ort.avg,
         'logit_margin_loss': losses_margin.avg,
@@ -1058,13 +1047,11 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
     ce_losses = AverageMeter('CELoss', ':.4e')
     ortho_losses = AverageMeter('OrthoLoss', ':.4e')
     instance_losses = AverageMeter('InstanceLoss', ':.4e')
-    proto_sep_losses = AverageMeter('ProtoSepLoss', ':.4e')
     proto_loop_losses = AverageMeter('ProtoLoopLoss', ':.4e')
     
     ortho_weight = getattr(args, 'ortho_weight', 0.1)
     instance_loss_weight = getattr(args, 'instance_loss_weight', 0.1)
     positive_instance_topk_ratio = getattr(args, 'positive_instance_topk_ratio', 0.25)
-    proto_sep_loss_weight = getattr(args, 'proto_sep_loss_weight', 0.1)
     proto_loop_loss_weight = getattr(args, 'proto_loop_loss_weight', 0.05)
     
     train_loader_tqdm = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs} Training")
@@ -1094,10 +1081,6 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
                 topk_ratio=positive_instance_topk_ratio
             )
 
-        proto_sep_loss = torch.tensor(0.0, device=bag_labels.device)
-        if getattr(args, 'use_topk_proto_update', False) and 'proto_sep_loss' in outputs:
-            proto_sep_loss = outputs['proto_sep_loss']
-
         proto_loop_loss = torch.tensor(0.0, device=bag_labels.device)
         if getattr(args, 'use_proto_loop_consistency', False) and 'proto_loop_loss' in outputs:
             proto_loop_loss = outputs['proto_loop_loss']
@@ -1106,7 +1089,6 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         total_loss = (
             ce_loss
             + instance_loss_weight * instance_loss
-            + proto_sep_loss_weight * proto_sep_loss
             + proto_loop_loss_weight * proto_loop_loss
         )
         # + ortho_weight * ortho_loss
@@ -1124,8 +1106,6 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
             ortho_losses.update(ortho_loss.item(), B)
         if isinstance(instance_loss, torch.Tensor) and instance_loss.item() > 0:
             instance_losses.update(instance_loss.item(), B)
-        if isinstance(proto_sep_loss, torch.Tensor) and proto_sep_loss.item() > 0:
-            proto_sep_losses.update(proto_sep_loss.item(), B)
         if isinstance(proto_loop_loss, torch.Tensor) and proto_loop_loss.item() > 0:
             proto_loop_losses.update(proto_loop_loss.item(), B)
         
@@ -1134,7 +1114,6 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
                 Loss=f"{losses.avg:.4f}",
                 CE=f"{ce_losses.avg:.4f}",
                 Inst=f"{instance_losses.avg:.4f}",
-                Sep=f"{proto_sep_losses.avg:.4f}",
                 Loop=f"{proto_loop_losses.avg:.4f}",
                 Ortho=f"{ortho_losses.avg:.4f}"
             )
@@ -1146,7 +1125,6 @@ def train_seumld_epoch(model, train_loader, criterion_bc, optimizer, epoch, args
         'total_loss': losses.avg,
         'ce_loss': ce_losses.avg,
         'instance_loss': instance_losses.avg,
-        'proto_sep_loss': proto_sep_losses.avg,
         'proto_loop_loss': proto_loop_losses.avg,
         'ortho_loss': ortho_losses.avg,
     }

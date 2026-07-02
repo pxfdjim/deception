@@ -1,0 +1,702 @@
+%%
+%% This is file `sample-sigconf-authordraft.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `all,proceedings,bibtex,authordraft')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sample-sigconf-authordraft.tex.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+%% The first command in your LaTeX source must be the \documentclass
+%% command.
+%%
+%% For submission and review of your manuscript please change the
+%% command to \documentclass[manuscript, screen, review]{acmart}.
+%%
+%% When submitting camera ready or to TAPS, please change the command
+%% to \documentclass[sigconf]{acmart} or whichever template is required
+%% for your publication.
+%%
+%%
+\documentclass[sigconf,screen,review,anonymous]{acmart}
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage[table]{xcolor}
+\usepackage{subcaption}
+\usepackage{cleveref}
+\setlength{\heavyrulewidth}{0.9pt}
+\makeatletter
+\providecommand\@LN@col[1]{}
+\makeatother
+
+% Two-column conference layout.
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmlicensed}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{XXXXXXX.XXXXXXX}
+%% These commands are for a PROCEEDINGS abstract or paper.
+\acmConference[Conference acronym 'XX]{Make sure to enter the correct
+  conference title from your rights confirmation email}{June 03--05,
+  2018}{Woodstock, NY}
+%%
+%%  Uncomment \acmBooktitle if the title of the proceedings is different
+%%  from ``Proceedings of ...''!
+%%
+%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+%%  June 03--05, 2018, Woodstock, NY}
+\acmISBN{978-1-4503-XXXX-X/2018/06}
+
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Bridging the Granularity Gap: Audio-Modulated Prototype Aggregation for Multimodal Deception Detection}
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+\author{Anonymous Author(s)}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \city{City}
+  \country{Country}
+}
+\email{anonymous@example.com}
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+\renewcommand{\shortauthors}{Anonymous et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+
+Multimodal deception detection under sample-level supervision remains challenging, as sparse and weakly localized deceptive cues are often marginalized by predominant non-deceptive contexts during representation learning. Furthermore, the modalities exhibit heterogeneous temporal dynamics: visual indicators typically manifest as transient micro-expressions, whereas acoustic variations distribute continuously across an utterance. To address these discrepancies, we propose a novel architecture that effectively decouples and integrates distinct temporal scales. Specifically, a prototype-based temporal aggregation module is introduced to cluster segment-level visual features, explicitly preserving salient local responses. An acoustic-guided reweighting mechanism then leverages global acoustic representations to conditionally modulate the aggregated visual features, providing asynchronous cross-modal guidance without requiring strict frame-level alignment. Finally, a gated residual fusion module, regularized by an orthogonality constraint, integrates both branches while minimizing cross-modal redundancy and ensuring representation disentanglement. Extensive experiments on DOLOS, Real-Life Trial, and SEUMLD demonstrate that our framework systematically outperforms state-of-the-art baselines.
+
+\end{abstract}
+
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10002951.10003227.10003251</concept_id>
+       <concept_desc>Information systems~Multimedia information systems</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010147.10010178.10010224.10010225.10010228</concept_id>
+       <concept_desc>Computing methodologies~Activity recognition and understanding</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Information systems~Multimedia information systems}
+\ccsdesc[500]{Computing methodologies~Activity recognition and understanding}
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{ Deception Detection, Multimodal Fusion, Weakly Supervised Learning, Affective Computing}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+
+
+\section{Introduction}
+
+Automated deception detection represents a highly complex behavioral analysis challenge, carrying critical implications for high-stakes domains including judicial proceedings, criminal investigations, and security screening \cite{burzo2018multimodal, d2024analysis, abouelenien2014deception}. Established psychological and communication theories posit that the cognitive demands associated with fabricating a deceptive narrative induce involuntary nonverbal cues \cite{depaulo2003cues, buller1996interpersonal}, which are frequently observed as distinct acoustic-prosodic variations and fleeting facial micro-expressions \cite{vrij2019reading, ekman2009telling}. Building upon these foundations, computational deception detection has progressively transitioned from hand-crafted feature extraction \cite{su2014high, lloyd2019miami} toward deep representation learning frameworks engineered to jointly process visual, acoustic, and linguistic data \cite{guo2023audio, gogate2017deep, karimi2018toward}. Nevertheless, despite the recent proliferation of advanced multimodal architectures and extensive benchmarks like DOLOS \cite{guo2023audio} and DecepBench \cite{braverman2025decepbench}, contemporary systems continue to encounter a fundamental limitation. Specifically, the prevailing reliance on coarse, sample-level supervision is inherently misaligned with the temporally sparse nature of deceptive evidence, which typically manifests only in brief, localized segments within a much lengthier sequence. In deceptive behavior analysis, informative visual cues may appear only briefly, such as short-lived facial movements \cite{su2014high, ahmed2025deception} or localized indicators \cite{nam2023facialcuenet, ding2019face}. Studies utilizing real-world datasets further highlight that these sparse cues can be difficult to preserve when the model summarizes an entire sequence into a single representation \cite{perez2015deception, biccer2025decepticon}. While existing methods often employ sequence-level temporal aggregation \cite{bahaa2024advancing, zhuo2024video, sehrawat2023deception}, this approach may mix brief informative moments with longer neutral content, a challenge closely related to weakly supervised temporal modeling where sparse signals can be suppressed by dominant background patterns \cite{wang2017untrimmednets, nguyen2018weakly, li2023weakly}.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/motivate.pdf}
+\caption{\textbf Visual deceptive evidence is sparse and local, whereas acoustic context is global over the entire utterance.}
+\label{fig:motivation}
+\Description{Illustration comparing the sparsity of visual evidence with the continuous availability of acoustic context.}
+\end{figure}
+As illustrated in Figure~\ref{fig:motivation}, this challenge becomes more evident in multimodal settings where visual evidence for deception is often brief and localized, whereas acoustic information is typically available throughout the utterance and naturally represented at a global level. Acoustic-prosodic cues are commonly characterized by utterance-level or longer-range patterns, such as pitch-related measures and energy variation \cite{chen2020acoustic, levitan2018acoustic}. Consequently, the two modalities may not provide equally informative cues at the same moments, making cross-modal integration nontrivial \cite{baltruvsaitis2018multimodal, zhang2025large}. Under such conditions, fusion strategies relying on dense temporal correspondence can be less well matched to the underlying structure of the signals. More generally, multimodal alignment and fusion studies have noted that modality heterogeneity and misalignment can hinder effective integration \cite{baltruvsaitis2018multimodal, li2024multimodal, tsai2019multimodal}. Such misalignment may further cause one modality to dominate the fused representation \cite{zadeh2017tensor, hazarika2020misa}, or yield suboptimal fusion from uninformative cross-modal frames. \cite{arevalo2017gated, joze2020mmtm}.
+
+To address these challenges, we investigate multimodal deception detection under sample-level supervision in a setting where visual evidence is typically sparse and temporally localized, while acoustic information is more naturally represented at the utterance level. Within this context, we propose the Audio-Modulated Prototype Aggregation (AMPA) framework to preserve brief visual cues during temporal aggregation and to incorporate acoustic information without requiring fine-grained alignment between modalities. To mitigate the loss of short-duration visual evidence, AMPA replaces conventional global pooling with a prototype-guided structured aggregation module. This module groups segment-level visual features according to their response patterns prior to aggregation, ensuring that transient high-response segments are not directly averaged together with prolonged neutral intervals. Through this mechanism, brief but informative visual cues are protected from being weakened by dominant neutral content during sample-level summarization. Furthermore, to utilize acoustic information in a manner consistent with its temporal scope, AMPA employs the global utterance-level acoustic representation to modulate the weighting of the grouped visual segments. Rather than enforcing frame-level correspondence between the audio and visual streams, the framework utilizes the acoustic context to guide which visual groups receive greater emphasis during aggregation. This allows the acoustic information to assist in visual evidence selection without imposing strict temporal matching. To improve the final multimodal representation, we introduce a gated residual fusion module coupled with an explicit orthogonality regularization term. The gated residual design controls the amount of auxiliary multimodal information added to the primary visual representation, reducing the probability that the fused output is overly influenced by the auxiliary branch. Concurrently, the orthogonality constraint penalizes high cosine similarity between the primary visual branch and the auxiliary multimodal branch, encouraging the two branches to encode distinct information rather than repeating similar patterns. Structurally, the proposed framework is organized such that specific components address distinct difficulties in multimodal deception detection: the prototype-guided aggregation module preserves sparse visual evidence under sample-level supervision, the audio-guided weighting mechanism introduces acoustic context without imposing strict fine-grained alignment, and the regularized gated fusion module reduces redundancy during multimodal integration. 
+The main contributions of this work are summarized as follows:
+
+\begin{itemize}
+\item We systematically identify the attenuation of sparse visual evidence and temporal-granularity mismatch as primary bottlenecks in multimodal deception detection.
+\item We propose the Audio-Modulated Prototype Aggregation (AMPA) framework, which employs prototype-guided aggregation to preserve brief visual cues, and utilizes utterance-level acoustic context for adaptive cross-modal weighting without requiring strict  temporal alignment.
+\item We design a regularized gated residual fusion mechanism to mitigate cross-modal representational redundancy. Extensive experiments on three standard benchmarks demonstrate the effectiveness and stability of our approach
+\end{itemize}
+
+\section{Related Work}
+\subsection{Deception Detection}
+The paradigm of computational deception detection has shifted from relying on hand-crafted behavioral features to leveraging end-to-end multimodal deep learning architectures \cite{abouelenien2014deception, perez2015deception, guo2023audio}. Early approaches typically modeled deception using hand-crafted cues extracted from individual modalities, primarily including facial behavior patterns, acoustic-prosodic statistics, and lexical indicators derived from transcripts \cite{abouelenien2014deception, levitan2018acoustic, rill2019high}. These methodological designs are rooted in psychology and communication research, which demonstrates that deceptive behavior often manifests in specific verbal styles, vocal variations, and non-verbal facial signals \cite{buller1996interpersonal, ekman2009telling, vrij2019reading}. 
+Driven by advancements in deep representation learning, subsequent research has increasingly adopted multimodal architectures capable of jointly encoding visual, acoustic, and linguistic streams in an end-to-end manner \cite{gogate2017deep, wu2018deception, guo2023audio}. This evolution enables models to bypass isolated low-level feature engineering, focusing instead on capturing complex cross-modal interactions and temporal dynamics \cite{wu2018deception, guo2023audio, uskaikar2024multi}.
+Within this literature, the visual modality has garnered significant attention, driven by evidence that deceptive behavior frequently manifests in subtle facial dynamics and fleeting non-verbal reactions \cite{ekman2009telling, ding2019face, nam2023facialcuenet}. To capture these nuanced cues, architectures such as FFCSN \cite{ding2019face} and FacialCueNet \cite{nam2023facialcuenet} have been proposed to explicitly model localized facial motion patterns and micro-temporal variations. Furthermore, to capture long-range temporal dependencies inherent in video sequences, researchers have extensively explored sequence modeling architectures. These range from recurrent frameworks, including Stacked Bi-LSTM \cite{sehrawat2023deception} and LSTM-based fusion strategies \cite{bahaa2024advancing}, to recent attention-driven and advanced neural video encoders \cite{zhuo2024video, ahmed2025deception}.
+
+In parallel, graph-based multimodal architectures have been explored to model complex interactions among heterogeneous cues across modalities \cite{zhang2022fine}. The development and comprehensive evaluation of these deep multimodal methods have been further accelerated by large-scale resources such as DOLOS \cite{guo2023audio} and extensive benchmarks like DecepBench \cite{braverman2025decepbench}. 
+Despite these advances, a fundamental challenge persists: a misalignment between annotation granularity and the nature of deceptive cues. Most available datasets provide supervision exclusively at the sample-level \cite{perez2015deception, guo2023audio}. Conversely, critical visual evidence of deception is typically fleeting, subtle, and temporally localized to a mere fraction of the entire sequence \cite{ding2019face, nam2023facialcuenet, biccer2025decepticon}. Consequently, conventional architectures that strictly aggregate frame-level features into clip-level representations via global pooling or flat temporal encoding inevitably result in the loss of fine-grained temporal resolution, failing to preserve critical short-duration local signals.
+
+\subsection{Weakly Supervised Video Learning}
+The problem of identifying informative temporal regions from an untrimmed sequence using only sample-level supervision has been widely studied in weakly supervised video learning, particularly in Weakly Supervised Temporal Action Localization (WTAL) \cite{wang2017untrimmednets, sultani2018real, li2023weakly}. A central observation in this literature is that global aggregation alone proves suboptimal when relevant evidence is temporally sparse \cite{wang2017untrimmednets, li2023weakly, shou2018autoloc}. To address this issue, WTAL methods commonly introduce strategies such as top-$k$ pooling, attention-based segment weighting, or class-specific localization scores to explicitly emphasize potentially informative temporal snippets without requiring frame-wise annotations \cite{wang2017untrimmednets, nguyen2018weakly, paul2018w}. Related weakly supervised anomaly and event localization studies have similarly demonstrated that coarse sample-level labels can effectively support temporal discrimination when models are explicitly guided to isolate salient local regions \cite{sultani2018real, li2023weakly, lee2020background}. These architectural designs provide crucial foundational references for handling sparse evidence under weak supervision settings and constraints.
+
+However, deception detection fundamentally differs from standard action or anomaly localization. WTAL architectures are primarily designed for events exhibiting strong visual salience, such as overt human actions, pronounced abnormal motions, or scene transitions \cite{sultani2018real, li2023weakly}. By contrast, the visual evidence associated with deception is typically kinematically subtle, temporally brief, and highly ambiguous, frequently manifesting merely as a micro-expression, a slight facial twitch, or a fleeting facial muscle activation \cite{ding2019face, nam2023facialcuenet, ahmed2025deception}. These cues are not only temporally sparse but also semantically intertwined with ordinary conversational variations \cite{ding2019face, nam2023facialcuenet}. Consequently, localization strategies optimized for visually prominent events may inevitably falter when applied directly to deception detection without architectural adaptation.
+
+This modality-specific limitation indicates that mining sparse visual evidence for deception necessitates contextual grounding beyond visual-only temporal modeling. In the broader context of affective computing, auxiliary modalities are consistently leveraged to disambiguate uncertain observations and enhance overall predictive robustness \cite{baltruvsaitis2018multimodal, zhang2025large}. Specifically, acoustic-prosodic patterns—such as speaking rate, pitch variation, and energy fluctuation—exhibit continuous semantics across the utterance rather than isolated frame-wise variations \cite{chen2020acoustic, levitan2018acoustic}. These intrinsic properties establish audio as a highly reliable contextual anchor, particularly when the localized visual behavior is imperceptible or algorithmically difficult to interpret in isolation \cite{chen2020acoustic, levitan2018acoustic, baltruvsaitis2018multimodal}.
+
+\subsection{Multimodal Fusion}
+Multimodal fusion is a central topic in multimodal representation learning and has been studied across a wide range of tasks involving vision, speech, language, and affective signals \cite{baltruvsaitis2018multimodal, zhang2025large}. Existing methods employ diverse fusion strategies, including direct feature concatenation, bilinear interaction, cross-modal attention, graph-based modeling, and parameter-efficient modulation schemes \cite{zadeh2017tensor, zhang2022fine, li2024multimodal}. The general goal of these methods is to integrate information from multiple sources into a unified representation while preserving useful modality-specific characteristics \cite{baltruvsaitis2018multimodal}. In many multimodal tasks, dense cross-modal interaction is highly effective when informative cues from different modalities are temporally aligned or semantically synchronized across the input streams \cite{li2024multimodal}.
+
+In audio-visual deception detection, however, the two modalities contribute discriminative information at fundamentally different temporal scales. Acoustic behavior is often distributed continuously across an utterance and is commonly described through broader prosodic patterns and cognitive-load-related tendencies \cite{chen2020acoustic, levitan2018acoustic}. Visual evidence, in contrast, is frequently concentrated in short intervals, taking the form of subtle facial motions or brief gaze-related changes \cite{ding2019face, nam2023facialcuenet}. Under such conditions, conventional fusion strategies that rely heavily on dense frame-level correspondence struggle to capture the underlying signal dynamics, since the most informative cues in the two modalities are inherently asynchronous and vary in temporal density \cite{tsai2019multimodal}. This misalignment challenge becomes particularly pronounced when integrating sparse local visual evidence with broader acoustic contextual information.
+
+Furthermore, unregularized cross-modal fusion often leads to representational redundancy. Without explicit constraints, different network branches tend to learn overlapping features, increasing the representation size without providing more useful information for classification \cite{hazarika2020misa}. Therefore, effective fusion should focus on learning complementary features rather than simply making the network deeper or increasing feature dimensions \cite{arevalo2017gated, li2024multimodal}. For deception detection, this requires fusion modules to integrate audio and visual signals with different temporal patterns, without forcing strict frame-level alignment between the respective modalities.
+
+\section{Proposed Method}
+\label{sec:method}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/main.pdf}
+    \caption{\textbf{Overview of AMPA.}
+\label{fig:model}
+    AMPA consists of a visual branch for segment-level visual encoding, an audio branch for utterance-level acoustic context modeling, and an audio-guided attention and fusion module for final prediction. The visual branch produces the primary sample-level representation, while the audio branch provides contextual cues for segment weighting and multimodal fusion.}
+    \Description{Block diagram showing the Audio-Modulated Prototype Aggregation framework, including visual and audio branches and gated fusion.}
+\end{figure*}
+
+\subsection{Problem Formulation}
+
+Given a video sample and its corresponding full audio sequence, we divide the video into $K$ consecutive non-overlapping temporal segments, each containing $T$ frames. Each segment is fed into a pretrained video encoder to extract a segment-level visual feature. If the final segment contains fewer than  $T$ frames, zero padding is applied to complete the input length. The video is thus represented as a sequence of segment-level visual features
+\begin{equation}
+\mathcal{X}=\{\mathbf{x}_1,\mathbf{x}_2,\dots,\mathbf{x}_K\}, 
+\qquad \mathbf{x}_k \in \mathbb{R}^{D_v},
+\end{equation}
+together with an utterance-level acoustic feature
+\begin{equation}
+\mathbf{a} \in \mathbb{R}^{D_a}.
+\end{equation}
+The goal is to predict a binary veracity label for the entire sample.
+
+
+
+\subsection{Overview}
+
+As shown in \Cref{fig:model}, the proposed Audio-Modulated Prototype Aggregation framework (AMPA) consists of three components: a visual branch, an audio branch, and an audio-guided fusion module. The visual branch transforms segment-level visual features into normalized embeddings and aggregates them into a primary sample-level visual representation. The audio branch encodes the full audio sequence into a compact utterance-level acoustic context vector. This acoustic context is then used to guide attention over visual segments and to complement the final fused representation.
+
+
+
+\subsection{Visual Encoding}
+
+The visual branch operates on segment-level features extracted by a pretrained video encoder. Each segment feature is first transformed into a corresponding intermediate hidden representation:
+
+\begin{equation}
+\mathbf{z}_k = f_v(\mathbf{x}_k),
+\end{equation}
+where $f_v(\cdot)$ denotes an MLP-based feature transform. The hidden representation is then projected into a normalized embedding space:
+\begin{equation}
+\mathbf{e}_k = \frac{g_v(\mathbf{z}_k)}{\|g_v(\mathbf{z}_k)\|_2},
+\end{equation}
+where $g_v(\cdot)$ is a projection head, and $\mathbf{e}_k \in \mathbb{R}^{E}$ denotes the $L_2$-normalized embedding of the $k$-th segment.
+
+To structure segment-level observations before global aggregation, AMPA introduces two learnable prototypes,
+\begin{equation}
+\mathbf{P} = [\mathbf{p}_0,\mathbf{p}_1]^\top \in \mathbb{R}^{2 \times E},
+\end{equation}
+where $\mathbf{p}_j \in \mathbb{R}^{E}$ denotes prototype $j$. For each segment embedding, we compute its similarity to the learned prototypes and assign it to the one exhibiting the relatively higher similarity metric score:
+
+\begin{equation}
+c_k = \arg\max_{j \in \{0,1\}} \mathbf{p}_j^\top \mathbf{e}_k .
+\label{eq:prototype_assign}
+\end{equation}
+
+After assignment, embeddings associated with the same prototype are aggregated by element-wise max pooling:
+\begin{equation}
+\mathbf{m}_j = \max_{k:c_k=j}\mathbf{e}_k, 
+\qquad j \in \{0,1\},
+\end{equation}
+where the max operation is applied element-wise. If no segment is assigned to prototype $j$, we set $\mathbf{m}_j=\mathbf{0}$ to keep the overall representation dimensionality strictly fixed. The resulting pooled features from the two groups are then concatenated to form the primary sample-level global visual feature representation:
+\begin{equation}
+\mathbf{v}_{\mathrm{vis}} = [\mathbf{m}_0 \parallel \mathbf{m}_1].
+\end{equation}
+
+This prototype-guided grouping avoids directly collapsing all segment embeddings into a single pooled vector. Instead, AMPA first partitions the segment set according to prototype affinity and then performs group-wise max pooling, which helps preserve high-response local evidence while maintaining coarse structural diversity at the corresponding macroscopic sample level.
+
+
+The assignment in \eqref{eq:prototype_assign} is non-differentiable. We therefore update the prototypes outside gradient back-propagation using an exponential moving average (EMA), independently of the max-pooling operation used to construct $\mathbf{v}_{\mathrm{vis}}$. During training, the prototypes are updated at the sample level using ground-truth sample labels alongside their implicitly predicted segment categories:
+
+\begin{equation}
+\mathbf{p}_{j} \leftarrow m\mathbf{p}_{j} + (1-m)\mathbf{e},
+\end{equation}
+where $\mathbf{e}$ denotes a segment embedding assigned to prototype $j$ by the update rule, and $m \in [0,1)$ is the momentum coefficient. After each update stage, the prototypes are $L_2$-normalized:
+\begin{equation}
+\mathbf{p}_{j} \leftarrow \frac{\mathbf{p}_{j}}{\|\mathbf{p}_{j}\|_2}.
+\end{equation}
+
+\subsection{Audio-Guided Attention}
+
+The audio branch encodes the utterance-level acoustic feature into a highly compact and informative context representation:
+
+\begin{equation}
+\mathbf{a}_e = f_a(\mathbf{a}),
+\end{equation}
+where $f_a(\cdot)$ denotes the acoustic encoder.
+
+We use this acoustic context to compute attention over the normalized visual segment embeddings. Specifically, the acoustic representation is projected into a query vector, and each segment embedding is projected into a key and a value:
+\begin{equation}
+\mathbf{q} = \mathbf{W}_q \mathbf{a}_e,\qquad
+\mathbf{k}_k = \mathbf{W}_k \mathbf{e}_k,\qquad
+\mathbf{v}_k = \mathbf{W}_v \mathbf{e}_k,
+\end{equation}
+where $\mathbf{q}, \mathbf{k}_k, \mathbf{v}_k \in \mathbb{R}^{d_h}$, and $\mathbf{W}_q$, $\mathbf{W}_k$, and $\mathbf{W}_v$ are designated as continuously trainable independent linear projection weight matrices.
+
+
+
+We naturally adopt a standard and computationally efficient single-head scaled dot-product attention mechanism:
+
+\begin{equation}
+\alpha_k=
+\frac{
+\exp\left(\dfrac{\mathbf{q}^{\top}\mathbf{k}_k}{\sqrt{d_h}\,\tau}\right)
+}{
+\sum_{j=1}^{K}
+\exp\left(\dfrac{\mathbf{q}^{\top}\mathbf{k}_j}{\sqrt{d_h}\,\tau}\right)
+},
+\end{equation}
+where $\tau>0$ is a learnable temperature parameter. The corresponding audio-guided overall visual summary is then computed as
+\begin{equation}
+\mathbf{v}_{\mathrm{att}} = \sum_{k=1}^{K} \alpha_k \mathbf{v}_k.
+\end{equation}
+
+This module uses utterance-level acoustic context to modulate the contribution of visual segments. Rather than enforcing strict frame-level cross-modal alignment, AMPA uses audio to reweight segment-level visual evidence in the learned embedding space, where similarity structure is more directly aligned with the required downstream classification decision.
+
+\subsection{Fusion}
+
+Given the primary visual representation $\mathbf{v}_{\mathrm{vis}}$, the audio-guided visual summary $\mathbf{v}_{\mathrm{att}}$, and the acoustic context representation $\mathbf{a}_e$, our initial step is to project these two auxiliary representations into the exact same dimensional feature space as the original $\mathbf{v}_{\mathrm{vis}}$:
+\begin{equation}
+\mathbf{v}_{\mathrm{att}}' = \psi_v(\mathbf{v}_{\mathrm{att}}), 
+\qquad
+\mathbf{a}_e' = \psi_a(\mathbf{a}_e),
+\end{equation}
+where $\psi_v(\cdot)$ and $\psi_a(\cdot)$ denote learnable projection functions.
+
+We then introduce a gating module to adaptively control the contribution of the provided supplementary auxiliary information:
+
+\begin{equation}
+\mathbf{g}=
+\sigma\!\left(
+h_g\!\left(
+\mathrm{sg}(\mathbf{v}_{\mathrm{vis}})
+\parallel
+\mathbf{v}_{\mathrm{att}}'
+\parallel
+\mathbf{a}_e'
+\right)
+\right),
+\end{equation}
+where $h_g(\cdot)$ denotes a learnable mapping function, $\sigma(\cdot)$ is the element-wise sigmoid function, $\mathbf{g}\in\mathbb{R}^{2E}$ is the gating vector, and $\mathrm{sg}(\cdot)$ denotes the stop-gradient operator. The final fused heterogeneous representation is then mathematically defined as
+
+\begin{equation}
+\mathbf{h}
+=
+\mathbf{v}_{\mathrm{vis}}
++
+\mathbf{g}\odot
+\left(
+\mathbf{v}_{\mathrm{att}}'
++
+\mathbf{a}_e'
+\right),
+\end{equation}
+where $\odot$ denotes element-wise multiplication. This residual formulation preserves the primary visual representation while injecting complementary audio-guided information in a controlled manner.
+
+The fused representation is fed into a classifier for final prediction, with the supervised cross-entropy based classification learning objective securely systematically formulated as follows:
+\begin{equation}
+\hat{y} = f_c(\mathbf{h}), \qquad
+\mathcal{L}_{\mathrm{cls}} = \mathrm{CE}(\hat{y}, y).
+\end{equation}
+
+To reduce redundancy between the primary visual representation and the projected audio-guided visual summary, we further introduce an orthogonality regularization term:
+\begin{equation}
+\mathcal{L}_{\mathrm{ortho}}
+=
+\frac{1}{B}
+\sum_{i=1}^{B}
+\left|
+\frac{
+\mathrm{sg}(\mathbf{v}_{\mathrm{vis}}^{(i)})^{\top}\mathbf{v}_{\mathrm{att}}^{\prime(i)}
+}{
+\|\mathrm{sg}(\mathbf{v}_{\mathrm{vis}}^{(i)})\|_2
+\|\mathbf{v}_{\mathrm{att}}^{\prime(i)}\|_2
+}
+\right|,
+\end{equation}
+where $B$ is the batch size. The overall training objective is
+\begin{equation}
+\mathcal{L} = \mathcal{L}_{\mathrm{cls}} + \lambda \mathcal{L}_{\mathrm{ortho}},
+\end{equation}
+where $\lambda$ is a balancing coefficient. This regularization encourages the attended auxiliary representation to remain complementary to the primary visual representation during fusion.
+
+
+
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate AMPA on three representative multimodal deception detection benchmarks: \textbf{(1) Real-Life Trial}~\cite{perez2015deception}, a high-stakes courtroom dataset containing 121 videos and evaluated under the standard Leave-One-Subject-Out Cross-Validation (LOSO-CV) protocol; \textbf{(2) SEUMLD}~\cite{xu2024multimodal}, a Chinese dialogue-based deception detection dataset containing 3,224 conversation segments and evaluated under its official test split; and \textbf{(3) DOLOS}~\cite{guo2023audio}, an audio-visual deception dataset containing 1,675 video clips from conversational game shows and evaluated with its official 3-fold person-independent cross-validation protocol. For all datasets, we rigorously adhere to and successfully strictly follow the corresponding standardized official evaluation experimental settings.
+
+\begin{table*}[t]
+\caption{
+Performance and efficiency comparison with representative baselines on DOLOS, Real-Life Trial, and SEUMLD. 
+\textcolor{red}{Best} results are shown in red and \textcolor{blue}{second-best} results are shown in blue. 
+\emph{``--'' denotes traditional machine learning methods for which parameter counts and FLOPs are not applicable. For comparability, trainable baselines were evaluated under the same data splits and metrics whenever code or faithful reimplementation was available. The reported parameters and FLOPs of AMPA correspond to the trainable part of the model and exclude the frozen offline feature extractors.}
+}
+\label{tab:main_results}
+\centering
+\fontsize{9.3pt}{9.8pt}\selectfont
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{4.6pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcc|ccc|ccc|ccc}
+\toprule
+\multirow{2}{*}[-1.6ex]{Method} &
+\multirow{2}{*}[-1.6ex]{\makecell{Params}} &
+\multirow{2}{*}[-1.6ex]{\makecell{FLOPs}} &
+\multicolumn{3}{c|}{DOLOS} &
+\multicolumn{3}{c|}{Real-Life Trial} &
+\multicolumn{3}{c}{SEUMLD} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9} \cmidrule(lr){10-12}
+& &
+& ACC & F1 & AUC
+& ACC & F1 & AUC
+& ACC & F1 & AUC \\
+\midrule[\heavyrulewidth]
+HLF-Fusion~\cite{rill2019high} & - & - & 56.09 & 59.18 & 57.79 & 69.42 & 70.40 & 75.14 & 54.98 & 34.38 & 50.49 \\
+FFCSN~\cite{ding2019face} & 36.06M & 29.96G & 67.58 & 54.12 & 68.02 & 90.08 & 90.48 & 97.51 & 62.03 & 41.53 & 56.30 \\
+FacialCueNet~\cite{nam2023facialcuenet} & 22.23M & 25.90G & 63.93 & 48.65 & 66.59 & 93.39 & \textcolor{blue}{\textbf{93.55}} & 96.56 & 61.41 & 19.53 & 51.92 \\
+MAD-Net~\cite{ahmed2025deception} & 0.27M & 69.30M & 65.40 & 59.36 & 68.48 & 91.74 & 91.80 & \textcolor{blue}{\textbf{98.80}} & 65.32 & 2.10 & 52.44 \\
+LSTM-Concat~\cite{bahaa2024advancing} & \textcolor{blue}{\textbf{0.15M}} & 14.45M & 67.83 & 46.72 & 71.26 & 60.87 & 55.45 & 57.38 & 61.37 & 26.13 & 51.36 \\
+DECEPTIcON~\cite{biccer2025decepticon} & 1.64M & \textcolor{blue}{\textbf{1.64M}} & \textcolor{blue}{\textbf{74.45}} & \textcolor{blue}{\textbf{76.23}} & 77.56 & 85.95 & 86.18 & 74.70 & 62.52 & 30.64 & 53.80 \\
+Graph-CrossModal~\cite{zhang2022fine} & 40.31M & 0.18G & 52.79 & 69.10 & 50.00 & 91.38 & 90.38 & 90.01 & 68.87 & 35.76 & \textcolor{red}{\textbf{73.33}} \\
+LoRA-Calib~\cite{hsiao2023lora} & 0.22M & 15.40M & 65.71 & 42.15 & 69.26 & 85.34 & 83.50 & 76.33 & \textcolor{blue}{\textbf{69.29}} & 45.13 & 66.85 \\
+Stacked-BiLSTM~\cite{sehrawat2023deception} & 10.77M & 43.25G & 70.45 & 57.42 & \textcolor{blue}{\textbf{77.96}} & \textcolor{blue}{\textbf{94.21}} & 93.44 & 94.58 & 60.71 & 23.91 & 53.38 \\
+DeiT--Wav2Vec~\cite{zhuo2024video} & \textcolor{red}{\textbf{0.033M}} & \textcolor{red}{\textbf{0.03M}} & 68.54 & 50.37 & 74.28 & 88.79 & 88.79 & 83.20 & 66.78 & \textcolor{blue}{\textbf{47.79}} & 66.78 \\
+\midrule
+\rowcolor[HTML]{F5F5F5}
+\multicolumn{1}{c}{\textbf{AMPA (Ours)}} & 3.45M & 2.94M &
+\textcolor{red}{\textbf{75.55}} & \textcolor{red}{\textbf{78.01}} &
+\textcolor{red}{\textbf{80.15}} & \textcolor{red}{\textbf{95.04}} &
+\textcolor{red}{\textbf{95.16}} & \textcolor{red}{\textbf{98.97}} &
+\textcolor{red}{\textbf{69.65}} & \textcolor{red}{\textbf{49.78}} & \textcolor{blue}{\textbf{69.20}} \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Core ablation study of AMPA on three datasets. We report modality baselines, conventional fusion baselines, and key component removals. Best results are shown in \textbf{bold}.}
+\label{tab:ablation_core}
+\centering
+\fontsize{9.4pt}{10.2pt}\selectfont
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{8pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ll|ccc|ccc|ccc}
+\toprule
+\multirow{2}{*}[-1.2ex]{Group}
+& \multirow{2}{*}[-1.2ex]{Variant}
+& \multicolumn{3}{c|}{DOLOS}
+& \multicolumn{3}{c|}{Real-Life Trial}
+& \multicolumn{3}{c}{SEUMLD} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11}
+& & ACC & F1 & AUC & ACC & F1 & AUC & ACC & F1 & AUC \\
+\midrule[\heavyrulewidth]
+\multirow{2}{*}{\textit{\textbf{(a) Modality}}}
+& Visual Only & 72.99 & 77.24 & 80.48 & 88.43 & 88.52 & 94.54 & 65.57 & 9.19 & 49.74 \\
+& Audio Only & 63.99 & 66.37 & 66.70 & 71.90 & 72.13 & 84.67 & 64.80 & 49.60 & 69.00 \\
+\addlinespace[2pt]
+\multirow{2}{*}{\textit{\textbf{(b) Fusion}}}
+& Early Fusion (Concatenation) & 64.43 & 68.46 & 67.56 & 89.26 & 89.43 & 95.87 & 68.70 & 42.77 & 66.84 \\
+& Late Fusion (Score Averaging) & 65.26 & 68.45 & 70.12 & 90.08 & 90.16 & 96.50 & 68.85 & 49.50 & 67.12 \\
+\addlinespace[2pt]
+\multirow{3}{*}{\textit{\textbf{(c) Components}}}
+& w/o Cross-Modal Attention & 73.12 & 75.34 & 76.85 & 90.91 & 91.06 & 96.82 & 66.42 & 39.85 & 62.30 \\
+& w/o Gated Fusion & 74.15 & 76.42 & 78.65 & 92.56 & 92.68 & 97.85 & 67.55 & 45.30 & 66.45 \\
+& w/o Acoustic Context Residual & 73.88 & 76.05 & 78.22 & 91.74 & 91.80 & 97.42 & 65.54 & 36.54 & 60.15 \\
+\midrule
+\rowcolor[HTML]{F5F5F5}
+\multicolumn{2}{c|}{\textbf{Full AMPA (Ours)}} & \textbf{75.55} & \textbf{78.01} & \textbf{80.15} & \textbf{95.04} & \textbf{95.16} & \textbf{98.97} & \textbf{69.65} & \textbf{49.78} & \textbf{69.20} \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+\subsection{Baselines and Experimental Design}
+
+We compare AMPA with representative deception detection methods spanning handcrafted systems, visual deep models, and multimodal approaches. To ensure a fair comparison, all compared trainable baselines considered in this study use at most two modalities, namely vision and audio, and are evaluated under the same dataset splits and metric definitions whenever possible. As shown in table 1, the compared methods differ substantially in modality usage, representation learning strategy, and model scale. We systematically compute and subsequently accurately report ACC, F1, and AUC on each respective individual dataset, together with parameter counts and FLOPs when they are computationally available.
+
+\subsection{Implementation Details}
+
+To preserve semantic priors and prevent overfitting, multimodal features are extracted offline using frozen pretrained encoders.Visually, each video is partitioned into temporal segments and processed by a VideoMAEv2~\cite{wang2023videomae} backbone. The encoder accepts 16 consecutive frames per unit without further sampling, yielding a 768-dimensional vector per segment. Acoustically, the audio track is encoded by a WavLM Large~\cite{chen2022wavlm} model into a 1024-dimensional utterance-level representation. These pre-extracted high-level features are then directly fed into the core AMPA framework.
+
+Within the optimized trainable framework configuration, the intermediate hidden dimension is specifically set to 768 and the visual embedding dimension is set to 128. Unless otherwise stated, the number of semantic prototypes is set to 2, the prototype momentum is set to 0.9, and hierarchical max pooling is used as the default aggregation strategy. The orthogonality regularization weight $\lambda$ is empirically set to 0.1. The overall model is trained for 100 complete epochs with a batch size of 8 under a stable optimization schedule.
+
+
+
+
+\begin{table*}[t]
+\caption{Mechanism and representation ablation study.
+\emph{Full AMPA adopts hierarchical max pooling with $P=2$ prototypes as the default setting.} Best results are shown in \textbf{bold}.}
+\label{tab:ablation_mech}
+\centering
+\fontsize{9.4pt}{10.2pt}\selectfont
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{8pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ll|ccc|ccc|ccc}
+\toprule
+\multirow{2}{*}[-1.2ex]{Group}
+& \multirow{2}{*}[-1.2ex]{Variant}
+& \multicolumn{3}{c|}{DOLOS}
+& \multicolumn{3}{c|}{Real-Life Trial}
+& \multicolumn{3}{c}{SEUMLD} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11}
+& & ACC & F1 & AUC & ACC & F1 & AUC & ACC & F1 & AUC \\
+\midrule[\heavyrulewidth]
+\multirow{3}{*}{\textit{\textbf{(a) Aggregation}}}
+& Global Mean Pooling & 72.84 & 74.87 & 78.34 & 90.08 & 90.32 & 97.31 & 66.99 & 27.18 & 59.20 \\
+& Global Max Pooling & 72.75 & 75.20 & 78.52 & 90.91 & 91.06 & 97.79 & 66.06 & 27.97 & 60.31 \\
+& Hierarchical Mean Pooling & 73.56 & 77.11 & 79.49 & 91.74 & 91.94 & 98.17 & 69.05 & 41.73 & 65.34 \\
+\addlinespace[2pt]
+\multirow{3}{*}{\textit{\textbf{(b) Prototypes}}}
+& $P=3$ & 74.82 & 76.91 & 79.20 & 92.56 & 92.68 & 97.10 & 68.30 & 46.50 & 67.85 \\
+& $P=4$ & 75.05 & 77.30 & 79.55 & 89.26 & 89.43 & 96.88 & 68.85 & 45.20 & 68.10 \\
+& $P=5$ & 73.68 & 75.50 & 78.00 & 91.74 & 91.80 & 97.50 & 67.55 & 44.15 & 66.40 \\
+\addlinespace[2pt]
+\textit{\textbf{(c) Representation}}
+& w/o Orthogonality Loss & 74.71 & 77.36 & 79.62 & 93.39 & 93.44 & 98.05 & 68.43 & 48.55 & 67.62 \\
+\midrule
+\rowcolor[HTML]{F5F5F5}
+\multicolumn{2}{c|}{\textbf{Full AMPA ($P=2$)}} & \textbf{75.55} & \textbf{78.01} & \textbf{80.15} & \textbf{95.04} & \textbf{95.16} & \textbf{98.97} & \textbf{69.65} & \textbf{49.78} & \textbf{69.20} \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+
+
+
+Unless otherwise specified, reported parameter counts and computational FLOPs correspond exclusively to the trainable components of AMPA, excluding the frozen offline feature extractors. Ablation studies strictly follow the evaluation protocols of the main experiments, with all compared models constrained to utilize a maximum of two modalities (visual and acoustic). For cross-validated datasets, average performance across all folds is reported. All experiments are implemented in PyTorch and executed on a single NVIDIA RTX 4090 GPU. Qualitative visualizations are derived from the held-out test set of the third cross-validation fold on the DOLOS benchmark. To guarantee exact computational reproducibility, random seeds are universally fixed across all experimental trials.
+
+
+
+
+
+\subsection{Main Results}
+
+The comprehensive quantitative results across all evaluated benchmarks are summarized in \cref{tab:main_results}. Specifically, on the DOLOS dataset, the proposed AMPA achieves the highest scores in terms of ACC, F1, and AUC. Similarly, for the Real-Life Trial dataset, AMPA consistently outperforms the established baselines across the majority of evaluation metrics. On the SEUMLD dataset, AMPA obtains the highest ACC and F1 values, whereas the Graph-CrossModal model yields the highest AUC. Overall, these empirical findings indicate that AMPA maintains robust performance across distinct datasets characterized by varying recording conditions, spoken languages, and evaluation protocols, thereby suggesting that the proposed framework generalizes effectively beyond a single restricted benchmark across varying data distributions.
+
+
+
+\subsection{Ablation Studies}
+
+We conduct ablation studies at two levels. Table~\ref{tab:ablation_core} examines modality combinations and core architectural components, while Table~\ref{tab:ablation_mech} isolates the effects of the aggregation strategy, prototype configuration, and orthogonality regularization. Together, these results support the three central design choices of AMPA: preserving sparse visual evidence, using utterance-level audio to guide segment weighting, and encouraging complementary multimodal fusion.
+
+\textbf{Aggregation strategy.} As shown in Table~\ref{tab:ablation_mech}(a), replacing the proposed prototype-guided hierarchical aggregation with global mean pooling, global max pooling, or hierarchical mean pooling consistently weakens performance in most settings. This suggests that the gain does not come from pooling alone, but from explicitly structuring segment-level observations before sample-level aggregation. The result is consistent with our motivation that deceptive visual evidence is sparse and should be preserved rather than being prematurely and irreversibly collapsed during early temporal summarization operations prior to classification.
+
+
+
+
+
+
+\textbf{Prototype count.} Table~\ref{tab:ablation_mech}(b) examines the effect of increasing the number of prototypes. The default setting $P=2$ gives the best overall performance across the three datasets, while larger values do not yield consistent gains. For binary deception detection, this suggests that two prototypes are sufficient to capture the dominant semantic tendencies, whereas additional prototypes may unnecessarily fragment already sparse and weakly distributed observations into finer local groups with reduced statistical stability.
+
+
+\textbf{Cross-modal context modeling.} Table~\ref{tab:ablation_core}(a) and Table~\ref{tab:ablation_core}(c) show that both unimodal baselines underperform the full model consistently, suggesting that audio and vision provide mutually complementary cues. Notably, excluding the cross-modal attention module leads to a substantial performance degradation, indicating that utterance-level acoustic properties are most effective when utilized to adaptively guide the weighting of visual segments, rather than being merely concatenated as isolated inputs.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/fig3.pdf}
+    \caption{\textbf{Temporal attention analysis.}
+\label{fig:temporal_evidence}
+    Comparison of attention weights with and without audio guidance across uniform temporal segments.}
+    \Description{Line graph comparing temporal attention weights, showing a sharper distribution when audio guidance is used.}
+    \vspace{-1.5ex}
+\end{figure}
+
+\textbf{Fusion design.} Table~\ref{tab:ablation_core}(b) indicates that the proposed gated residual fusion mechanism surpasses both early and late fusion paradigms across most evaluation criteria. Furthermore, replacing the dynamic gating module with unconstrained feature addition, or completely removing the acoustic context residual, similarly diminishes the overall prediction accuracy. These empirical observations imply that, when integrating heterogeneous modalities with disparate temporal granularities, an adaptively regularized residual integration is significantly more robust than conventional unconstrained feature mixing strategies.
+
+\textbf{Orthogonality regularization.} As shown in Table~\ref{tab:ablation_mech}(c), removing the orthogonality loss leads to consistent performance drops. This indicates that the auxiliary branch is most useful when it remains complementary to the primary visual pathway, rather than becoming overly similar to it. The regularization therefore helps reduce representational overlap during fusion.
+
+ 
+
+
+\subsection{Qualitative Analysis}
+
+\textbf{Attention mapping.} As illustrated in Figure~\ref{fig:temporal_evidence}, we visualize the segment-level attention weights distributed over a test sequence. Without auxiliary reference data, the visual-only attention distribution remains relatively flat, indicating the difficulty of localizing subtle facial cues. In contrast, the audio-guided attention mechanism yields a sharper distribution with distinct peaks corresponding to critical behavioral segments. This supports our hypothesis that utterance-level acoustic properties serve as stable temporal anchors, guiding the network to attend to sparse visual indicators of deception in a more reliably targeted manner.
+
+
+
+\textbf{Complementarity geometry.} Figure~\ref{fig:complementarity} illustrates the impact of the orthogonality regularization constraint ($\mathcal{L}_{\mathrm{ortho}}$) on the learned representation space. The paired slope plot reveals a consistent shift of the similarity scores toward zero for most samples after applying the regularization. Consequently, the delta distribution ($\Delta$ Similarity) exhibits a clear leftward shift. These spatial changes confirm that the orthogonality penalty successfully reduces internal feature redundancy, encouraging the auxiliary branch to capture complementary multimodal information prior to the residual fusion.
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/fig4_a.pdf}
+        \caption{Paired Slope Plot}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/fig4_b.pdf}
+        \caption{Delta Distribution}
+    \end{subfigure}
+    \vspace{-1ex}
+    \caption{\textbf{Complementarity analysis.}
+    Paired changes and delta distribution of feature cosine similarity with and without the orthogonality loss.}
+\label{fig:complementarity}
+    \Description{Paired slope plot and histogram showing that orthogonality regularization reduces cosine similarity between feature representations.}
+\end{figure}
+
+\textbf{Feature discriminability.} To assess the efficacy of the prototype-guided aggregation module, we visualize the sample-level feature embeddings using t-SNE in Figure~\ref{fig:tsne}. The extracted feature space autonomously partitions into two distinctive clusters, with the learned prototypes naturally aligning to the ground-truth truthful and deceptive categories. This spatial separation validates that organizing local segment observations through semantic prototypes helps the model synthesize a discriminative representation without requiring explicit frame-level supervision during end-to-end optimization.
+
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/fig5_a.pdf}
+        \caption{Ground Truth }
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/fig5_b.pdf}
+        \caption{Learned Prototypes}
+    \end{subfigure}
+    \vspace{-1ex}
+    \caption{\textbf{Feature space discriminability.}
+    t-SNE visualization of the learned sample-level latent representations.}
+\label{fig:tsne}
+    \Description{Scatter plots from t-SNE showing that the learned representations form distinct clusters for truthful and deceptive categories.}
+\end{figure}
+
+\textbf{Case study evaluation analysis.} Figure~\ref{fig:case_study} highlights the visual intervals receiving the highest attention weights across representative prediction scenarios. In the successful True Positive classification, the framework accurately isolates subtle, asymmetrical facial micro-expressions, confirming that cross-modal attention effectively targets relevant brief behavioral cues. Conversely, False Positives occasionally emerge when pronounced, contextually benign conversational gestures—such as emphatic head continuous movements—trigger excessive anomaly detection responses. Furthermore, False Negatives persist when genuine deceptive cues remain visually imperceptible or ambiguous, causing the network to default to an uninformative baseline neutral prediction due to the absence of sufficient discriminative multi-modal indicators.
+
+
+
+\begin{figure}[t]
+    \centering
+    \vspace{-2ex}
+    \includegraphics[width=\linewidth]{figures/fig6.pdf}
+    \vspace{-4.5ex}
+    \caption{\textbf{Case study visualization.} Spatial frames with the highest temporal attention weights are highlighted across representative prediction scenarios.}
+\label{fig:case_study}
+    \Description{Filmstrip image sequence highlighting spatial frames that received the highest temporal attention weights in the model.}
+    \vspace{-2ex}
+\end{figure}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This work investigates multimodal deception detection under sample-level supervision, addressing the inherent temporal granularity mismatch between sparse, localized visual indicators and utterance-level acoustic contexts. To decouple and integrate these heterogeneous signals, we propose a framework that structurally preserves transient visual dynamics and leverages global acoustic features for adaptive cross-modal modulation. Extensive evaluations across three diverse benchmarks (DOLOS, Real-Life Trial, and SEUMLD) demonstrate the robustness of the proposed architecture under varying linguistic and environmental conditions, while comprehensive ablations validate the efficacy of the designated aggregation and fusion mechanisms. Ultimately, these findings underscore the empirical necessity of explicitly modeling temporal sparsity and unaligned cross-modal dependencies in weakly supervised tasks. Future research will explore the integration of auxiliary physiological modalities (e.g., galvanic skin response) and the utilization of finer-grained temporal supervision to further enhance interpretability and generalization in unconstrained scenarios.
+
+%%
+%% The acknowledgments section is defined using the "acks" environment
+%% (and NOT an unnumbered section). This ensures the proper
+%% identification of the section in the article metadata, and the
+%% consistent spelling of the heading.
+\begin{acks}
+This work was supported by [to be added].
+\end{acks}
+
+%%
+%% The next two lines define the bibliography style to be used, and
+%% the bibliography file.
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample-base}
+
+
+\end{document}

@@ -40,17 +40,12 @@ def parse_args():
     parser.add_argument("--topk-proto-ratio", type=float, default=None)
     parser.add_argument("--topk-proto-threshold", type=float, default=None)
     parser.add_argument("--topk-proto-warmup-epochs", type=int, default=None)
-    parser.add_argument("--proto-sep-margin", type=float, default=None)
-    parser.add_argument("--proto-sep-loss-weight", type=float, default=None)
     parser.add_argument("--use-cluster-topk-mean-pooling", dest="use_cluster_topk_mean_pooling", action="store_true", default=None)
     parser.add_argument("--no-cluster-topk-mean-pooling", dest="use_cluster_topk_mean_pooling", action="store_false")
     parser.add_argument("--cluster-topk-mean-ratio", type=float, default=None)
     parser.add_argument("--use-visual-logit-ensemble", dest="use_visual_logit_ensemble", action="store_true", default=None)
     parser.add_argument("--no-visual-logit-ensemble", dest="use_visual_logit_ensemble", action="store_false")
     parser.add_argument("--visual-logit-ensemble-weight", type=float, default=None)
-    parser.add_argument("--use-audio-residual-drop", dest="use_audio_residual_drop", action="store_true", default=None)
-    parser.add_argument("--no-audio-residual-drop", dest="use_audio_residual_drop", action="store_false")
-    parser.add_argument("--audio-residual-drop-prob", type=float, default=None)
     parser.add_argument("--exp-suffix", default="")
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--num-runs", type=int, default=None)
@@ -59,13 +54,6 @@ def parse_args():
     parser.add_argument("--num-workers", type=int, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--eval-every", type=int, default=None)
-    parser.add_argument("--use-eval-threshold-search", dest="use_eval_threshold_search", action="store_true", default=None)
-    parser.add_argument("--no-eval-threshold-search", dest="use_eval_threshold_search", action="store_false")
-    parser.add_argument("--eval-threshold-min", type=float, default=None)
-    parser.add_argument("--eval-threshold-max", type=float, default=None)
-    parser.add_argument("--eval-threshold-step", type=float, default=None)
-    parser.add_argument("--eval-threshold-objective", choices=["acc_f1", "acc_tolerant_f1"], default=None)
-    parser.add_argument("--eval-threshold-acc-tolerance", type=float, default=None)
     parser.add_argument("--best-epoch-objective", choices=["acc_f1", "acc_tolerant_f1"], default=None)
     parser.add_argument("--best-epoch-acc-tolerance", type=float, default=None)
     parser.add_argument("--early-stop-patience", type=int, default=None)
@@ -85,14 +73,10 @@ def apply_cli_overrides(args, cli_args):
         "topk_proto_ratio",
         "topk_proto_threshold",
         "topk_proto_warmup_epochs",
-        "proto_sep_margin",
-        "proto_sep_loss_weight",
         "use_cluster_topk_mean_pooling",
         "cluster_topk_mean_ratio",
         "use_visual_logit_ensemble",
         "visual_logit_ensemble_weight",
-        "use_audio_residual_drop",
-        "audio_residual_drop_prob",
         "epochs",
         "num_runs",
         "batch_size",
@@ -100,12 +84,6 @@ def apply_cli_overrides(args, cli_args):
         "num_workers",
         "seed",
         "eval_every",
-        "use_eval_threshold_search",
-        "eval_threshold_min",
-        "eval_threshold_max",
-        "eval_threshold_step",
-        "eval_threshold_objective",
-        "eval_threshold_acc_tolerance",
         "best_epoch_objective",
         "best_epoch_acc_tolerance",
         "early_stop_patience",
@@ -132,8 +110,7 @@ def component_log_name(args):
         ratio_tag = str(getattr(args, "topk_proto_ratio", 0.25)).replace(".", "p")
         threshold_tag = str(getattr(args, "topk_proto_threshold", 0.0)).replace(".", "p")
         warmup_tag = str(getattr(args, "topk_proto_warmup_epochs", 0))
-        sep_tag = str(getattr(args, "proto_sep_loss_weight", 0.1)).replace(".", "p")
-        proto_tag = f"topkproto_on_r{ratio_tag}_th{threshold_tag}_wu{warmup_tag}_sepw{sep_tag}"
+        proto_tag = f"topkproto_on_r{ratio_tag}_th{threshold_tag}_wu{warmup_tag}"
         if getattr(args, "use_conservative_topk_proto_update", False):
             proto_tag = f"{proto_tag}_cons"
     cluster_tag = "ctopk_off"
@@ -144,18 +121,6 @@ def component_log_name(args):
     if getattr(args, "use_visual_logit_ensemble", False):
         weight_tag = str(getattr(args, "visual_logit_ensemble_weight", 0.3)).replace(".", "p")
         vens_tag = f"vens_on_w{weight_tag}"
-    adrop_tag = "ardrop_off"
-    if getattr(args, "use_audio_residual_drop", False):
-        prob_tag = str(getattr(args, "audio_residual_drop_prob", 0.3)).replace(".", "p")
-        adrop_tag = f"ardrop_on_p{prob_tag}"
-    calib_tag = "calib_off"
-    if getattr(args, "use_eval_threshold_search", False):
-        min_tag = str(getattr(args, "eval_threshold_min", 0.2)).replace(".", "p")
-        max_tag = str(getattr(args, "eval_threshold_max", 0.8)).replace(".", "p")
-        step_tag = str(getattr(args, "eval_threshold_step", 0.01)).replace(".", "p")
-        objective_tag = str(getattr(args, "eval_threshold_objective", "acc_f1"))
-        tolerance_tag = str(getattr(args, "eval_threshold_acc_tolerance", 0.0)).replace(".", "p")
-        calib_tag = f"calib_on_{min_tag}_{max_tag}_{step_tag}_{objective_tag}_tol{tolerance_tag}"
     eval_tag = f"eval{int(getattr(args, 'eval_every', 1))}"
     best_tag = str(getattr(args, "best_epoch_objective", "acc_f1"))
     best_tol_tag = str(getattr(args, "best_epoch_acc_tolerance", 0.0)).replace(".", "p")
@@ -165,7 +130,7 @@ def component_log_name(args):
     min_epochs = int(getattr(args, "early_stop_min_epochs", 0) or 0)
     early_stop_tag = "es_off" if patience <= 0 else f"es{patience}_min{min_epochs}"
     tqdm_tag = "tqdm_off" if getattr(args, "disable_tqdm", False) else "tqdm_on"
-    return f"training_log_{inst_tag}_{proto_tag}_{cluster_tag}_{vens_tag}_{adrop_tag}_{calib_tag}_{eval_tag}_best{best_tag}_tol{best_tol_tag}_{early_stop_tag}_{lr_tag}_{bs_tag}_{tqdm_tag}.txt"
+    return f"training_log_{inst_tag}_{proto_tag}_{cluster_tag}_{vens_tag}_{eval_tag}_best{best_tag}_tol{best_tol_tag}_{early_stop_tag}_{lr_tag}_{bs_tag}_{tqdm_tag}.txt"
 
 
 def main():
@@ -195,9 +160,7 @@ def main():
         f"conservative={getattr(args, 'use_conservative_topk_proto_update', False)}, "
         f"ratio={getattr(args, 'topk_proto_ratio', 0.25)}, "
         f"threshold={getattr(args, 'topk_proto_threshold', 0.0)}, "
-        f"warmup_epochs={getattr(args, 'topk_proto_warmup_epochs', 0)}, "
-        f"sep_margin={getattr(args, 'proto_sep_margin', 0.2)}, "
-        f"sep_weight={getattr(args, 'proto_sep_loss_weight', 0.1)}"
+        f"warmup_epochs={getattr(args, 'topk_proto_warmup_epochs', 0)}"
     )
     logger.info(
         " Cluster top-k mean pooling: "
@@ -208,20 +171,6 @@ def main():
         " Visual logit ensemble: "
         f"enabled={getattr(args, 'use_visual_logit_ensemble', False)}, "
         f"weight={getattr(args, 'visual_logit_ensemble_weight', 0.3)}"
-    )
-    logger.info(
-        " Audio residual drop: "
-        f"enabled={getattr(args, 'use_audio_residual_drop', False)}, "
-        f"prob={getattr(args, 'audio_residual_drop_prob', 0.3)}"
-    )
-    logger.info(
-        " Eval threshold search: "
-        f"enabled={getattr(args, 'use_eval_threshold_search', False)}, "
-        f"min={getattr(args, 'eval_threshold_min', 0.2)}, "
-        f"max={getattr(args, 'eval_threshold_max', 0.8)}, "
-        f"step={getattr(args, 'eval_threshold_step', 0.01)}, "
-        f"objective={getattr(args, 'eval_threshold_objective', 'acc_f1')}, "
-        f"acc_tolerance={getattr(args, 'eval_threshold_acc_tolerance', 0.0)}"
     )
     logger.info(
         " Best epoch selection: "
@@ -339,7 +288,6 @@ def main():
                              f"Loss={current_train_loss:.4f}, "
                              f"CE={train_metrics.get('ce_loss', 0.0):.4f}, "
                              f"Inst={train_metrics.get('instance_loss', 0.0):.4f}, "
-                             f"Sep={train_metrics.get('proto_sep_loss', 0.0):.4f}, "
                              f"Ortho={train_metrics.get('ortho_loss', 0.0):.4f}")
             print(f"📈 {train_summary}")
             logger.info(train_summary)

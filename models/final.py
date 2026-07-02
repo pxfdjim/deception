@@ -74,7 +74,6 @@ class LieDetection(nn.Module):
         )
         self.use_cluster_topk_mean_pooling = getattr(args, "use_cluster_topk_mean_pooling", False)
         self.use_visual_logit_ensemble = getattr(args, "use_visual_logit_ensemble", False)
-        self.use_audio_residual_drop = getattr(args, "use_audio_residual_drop", False)
 
         if self.modality in ("visual", "both"):
             self.visual_instance_classifier = VisualInstanceClassifier(
@@ -228,41 +227,6 @@ class LieDetection(nn.Module):
         ensemble_weight = getattr(self.args, "visual_logit_ensemble_weight", 0.3)
         return fused_logits + float(ensemble_weight) * visual_logits
 
-    def _compute_topk_proto_sep_loss(self, instance_embeddings_list, instance_logits_list, bag_labels):
-        if not self._topk_proto_active() or bag_labels is None:
-            device = instance_embeddings_list[0].device
-            return torch.tensor(0.0, device=device)
-
-        losses = []
-        topk_ratio = getattr(self.args, "topk_proto_ratio", 0.25)
-        threshold = getattr(self.args, "topk_proto_threshold", 0.0)
-        margin = getattr(self.args, "proto_sep_margin", 0.2)
-        for embeddings, logits, bag_label in zip(instance_embeddings_list, instance_logits_list, bag_labels):
-            if int(bag_label.item()) != 1 or embeddings.size(0) < 2:
-                continue
-
-            lie_probs = F.softmax(logits.detach(), dim=-1)[:, 1]
-            num_select = max(1, int(round(embeddings.size(0) * topk_ratio)))
-            num_select = min(num_select, embeddings.size(0) // 2)
-            if num_select < 1:
-                continue
-
-            top_indices = torch.topk(lie_probs, k=num_select, largest=True).indices
-            if threshold > 0:
-                top_indices = top_indices[lie_probs[top_indices] >= threshold]
-            if top_indices.numel() < 1:
-                continue
-
-            bottom_indices = torch.topk(lie_probs, k=top_indices.numel(), largest=False).indices
-            top_center = F.normalize(embeddings[top_indices].mean(dim=0), p=2, dim=0)
-            bottom_center = F.normalize(embeddings[bottom_indices].mean(dim=0), p=2, dim=0)
-            losses.append(F.relu(torch.sum(top_center * bottom_center) - margin))
-
-        if not losses:
-            device = instance_embeddings_list[0].device
-            return torch.tensor(0.0, device=device)
-        return torch.stack(losses).mean()
-
     def forward(self, visual_features_list=None, audio_features_list=None, bag_labels=None):
         if self.modality == "audio":
             audio_tensor = self._prepare_audio(audio_features_list)
@@ -279,14 +243,11 @@ class LieDetection(nn.Module):
                     v_inst_logits,
                 )
 
-        proto_sep_loss = self._compute_topk_proto_sep_loss(v_inst_embeds, v_inst_logits, bag_labels)
-
         if self.modality == "visual":
             logits = self.final_classifier(v_bag)
             return {
                 "logits": logits,
                 "instance_logits_list": v_inst_logits,
-                "proto_sep_loss": proto_sep_loss,
             }
 
         audio_tensor = self._prepare_audio(audio_features_list)
@@ -305,18 +266,6 @@ class LieDetection(nn.Module):
         gate = self.audio_gate(gate_input)
 
         audio_residual = gate * self.fusion_dropout(guided_v_proj + a_proj)
-        if self.training and self.use_audio_residual_drop:
-            drop_prob = getattr(self.args, "audio_residual_drop_prob", 0.3)
-            drop_prob = min(max(float(drop_prob), 0.0), 1.0)
-            if drop_prob > 0.0:
-                keep_prob = 1.0 - drop_prob
-                residual_mask = torch.empty(
-                    audio_residual.size(0),
-                    1,
-                    device=audio_residual.device,
-                ).bernoulli_(keep_prob)
-                audio_residual = audio_residual * residual_mask / max(keep_prob, 1e-6)
-
         fused_bag = v_bag + audio_residual
         logits = self.final_classifier(fused_bag)
         visual_logits = self.final_classifier(v_bag)
@@ -332,5 +281,4 @@ class LieDetection(nn.Module):
             "instance_logits_list": v_inst_logits,
             "cross_attention_weights": attn_weights_list,
             "ortho_loss": ortho_loss,
-            "proto_sep_loss": proto_sep_loss,
         }
