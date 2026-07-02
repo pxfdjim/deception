@@ -73,7 +73,6 @@ class LieDetection(nn.Module):
             args, "use_conservative_topk_proto_update", False
         )
         self.use_cluster_topk_mean_pooling = getattr(args, "use_cluster_topk_mean_pooling", False)
-        self.use_visual_logit_ensemble = getattr(args, "use_visual_logit_ensemble", False)
 
         if self.modality in ("visual", "both"):
             self.visual_instance_classifier = VisualInstanceClassifier(
@@ -221,12 +220,6 @@ class LieDetection(nn.Module):
             )
         return audio_features_list
 
-    def _apply_visual_logit_ensemble(self, fused_logits, visual_logits):
-        if not self.use_visual_logit_ensemble:
-            return fused_logits
-        ensemble_weight = getattr(self.args, "visual_logit_ensemble_weight", 0.3)
-        return fused_logits + float(ensemble_weight) * visual_logits
-
     def forward(self, visual_features_list=None, audio_features_list=None, bag_labels=None):
         if self.modality == "audio":
             audio_tensor = self._prepare_audio(audio_features_list)
@@ -268,8 +261,6 @@ class LieDetection(nn.Module):
         audio_residual = gate * self.fusion_dropout(guided_v_proj + a_proj)
         fused_bag = v_bag + audio_residual
         logits = self.final_classifier(fused_bag)
-        visual_logits = self.final_classifier(v_bag)
-        logits = self._apply_visual_logit_ensemble(logits, visual_logits)
 
         v_feat_norm = F.normalize(v_bag.detach(), p=2, dim=1)
         a_feat_norm = F.normalize(guided_v_proj, p=2, dim=1)
@@ -277,7 +268,6 @@ class LieDetection(nn.Module):
 
         return {
             "logits": logits,
-            "visual_logits": visual_logits,
             "instance_logits_list": v_inst_logits,
             "cross_attention_weights": attn_weights_list,
             "ortho_loss": ortho_loss,

@@ -43,9 +43,6 @@ def parse_args():
     parser.add_argument("--use-cluster-topk-mean-pooling", dest="use_cluster_topk_mean_pooling", action="store_true", default=None)
     parser.add_argument("--no-cluster-topk-mean-pooling", dest="use_cluster_topk_mean_pooling", action="store_false")
     parser.add_argument("--cluster-topk-mean-ratio", type=float, default=None)
-    parser.add_argument("--use-visual-logit-ensemble", dest="use_visual_logit_ensemble", action="store_true", default=None)
-    parser.add_argument("--no-visual-logit-ensemble", dest="use_visual_logit_ensemble", action="store_false")
-    parser.add_argument("--visual-logit-ensemble-weight", type=float, default=None)
     parser.add_argument("--exp-suffix", default="")
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--num-runs", type=int, default=None)
@@ -75,8 +72,6 @@ def apply_cli_overrides(args, cli_args):
         "topk_proto_warmup_epochs",
         "use_cluster_topk_mean_pooling",
         "cluster_topk_mean_ratio",
-        "use_visual_logit_ensemble",
-        "visual_logit_ensemble_weight",
         "epochs",
         "num_runs",
         "batch_size",
@@ -117,10 +112,6 @@ def component_log_name(args):
     if getattr(args, "use_cluster_topk_mean_pooling", False):
         ratio_tag = str(getattr(args, "cluster_topk_mean_ratio", 0.5)).replace(".", "p")
         cluster_tag = f"ctopk_on_r{ratio_tag}"
-    vens_tag = "vens_off"
-    if getattr(args, "use_visual_logit_ensemble", False):
-        weight_tag = str(getattr(args, "visual_logit_ensemble_weight", 0.3)).replace(".", "p")
-        vens_tag = f"vens_on_w{weight_tag}"
     eval_tag = f"eval{int(getattr(args, 'eval_every', 1))}"
     best_tag = str(getattr(args, "best_epoch_objective", "acc_f1"))
     best_tol_tag = str(getattr(args, "best_epoch_acc_tolerance", 0.0)).replace(".", "p")
@@ -130,7 +121,7 @@ def component_log_name(args):
     min_epochs = int(getattr(args, "early_stop_min_epochs", 0) or 0)
     early_stop_tag = "es_off" if patience <= 0 else f"es{patience}_min{min_epochs}"
     tqdm_tag = "tqdm_off" if getattr(args, "disable_tqdm", False) else "tqdm_on"
-    return f"training_log_{inst_tag}_{proto_tag}_{cluster_tag}_{vens_tag}_{eval_tag}_best{best_tag}_tol{best_tol_tag}_{early_stop_tag}_{lr_tag}_{bs_tag}_{tqdm_tag}.txt"
+    return f"training_log_{inst_tag}_{proto_tag}_{cluster_tag}_{eval_tag}_best{best_tag}_tol{best_tol_tag}_{early_stop_tag}_{lr_tag}_{bs_tag}_{tqdm_tag}.txt"
 
 
 def main():
@@ -166,11 +157,6 @@ def main():
         " Cluster top-k mean pooling: "
         f"enabled={getattr(args, 'use_cluster_topk_mean_pooling', False)}, "
         f"ratio={getattr(args, 'cluster_topk_mean_ratio', 0.5)}"
-    )
-    logger.info(
-        " Visual logit ensemble: "
-        f"enabled={getattr(args, 'use_visual_logit_ensemble', False)}, "
-        f"weight={getattr(args, 'visual_logit_ensemble_weight', 0.3)}"
     )
     logger.info(
         " Best epoch selection: "

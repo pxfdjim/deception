@@ -573,8 +573,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
     losses_loop = AverageMeter('Loss_Loop', ':.4e')
     losses_margin = AverageMeter('Loss_Margin', ':.4e')
     losses_rank = AverageMeter('Loss_Rank', ':.4e')
-    losses_vaux = AverageMeter('Loss_VAux', ':.4e')
-    losses_fcons = AverageMeter('Loss_FCons', ':.4e')
     losses_mil = AverageMeter('Loss_MIL', ':.4e')
     losses_mil_rank = AverageMeter('Loss_MILRank', ':.4e')
     instance_loss_weight = getattr(args, 'instance_loss_weight', 0.1)
@@ -646,33 +644,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
                 batch_rank_loss = F.relu(rank_margin - pairwise_gap).mean()
                 total_loss = total_loss + float(getattr(args, 'batch_rank_loss_weight', 0.05)) * batch_rank_loss
 
-        visual_aux_loss = torch.tensor(0.0, device=bag_labels.device)
-        visual_aux_warmup = getattr(args, 'visual_aux_loss_warmup_epochs', 0)
-        if (
-            getattr(args, 'use_visual_aux_loss', False)
-            and epoch >= visual_aux_warmup
-            and 'visual_logits' in outputs
-        ):
-            visual_aux_loss = criterion_bc(outputs['visual_logits'], bag_labels)
-            total_loss = total_loss + float(getattr(args, 'visual_aux_loss_weight', 0.2)) * visual_aux_loss
-
-        fusion_consistency_loss = torch.tensor(0.0, device=bag_labels.device)
-        consistency_warmup = getattr(args, 'fusion_consistency_warmup_epochs', 0)
-        if (
-            getattr(args, 'use_fusion_consistency_loss', False)
-            and epoch >= consistency_warmup
-            and 'visual_logits' in outputs
-        ):
-            temperature = max(float(getattr(args, 'fusion_consistency_temperature', 2.0)), 1e-6)
-            fused_log_probs = F.log_softmax(outputs['logits'] / temperature, dim=-1)
-            visual_probs = F.softmax(outputs['visual_logits'].detach() / temperature, dim=-1)
-            fusion_consistency_loss = F.kl_div(
-                fused_log_probs,
-                visual_probs,
-                reduction='batchmean'
-            ) * (temperature ** 2)
-            total_loss = total_loss + float(getattr(args, 'fusion_consistency_loss_weight', 0.05)) * fusion_consistency_loss
-
         mil_loss = torch.tensor(0.0, device=bag_labels.device)
         mil_rank_loss = torch.tensor(0.0, device=bag_labels.device)
         mil_warmup = getattr(args, 'mil_evidence_warmup_epochs', 0)
@@ -732,10 +703,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
             losses_margin.update(logit_margin_loss.item(), B)
         if isinstance(batch_rank_loss, torch.Tensor) and batch_rank_loss.item() > 0:
             losses_rank.update(batch_rank_loss.item(), B)
-        if isinstance(visual_aux_loss, torch.Tensor) and visual_aux_loss.item() > 0:
-            losses_vaux.update(visual_aux_loss.item(), B)
-        if isinstance(fusion_consistency_loss, torch.Tensor) and fusion_consistency_loss.item() > 0:
-            losses_fcons.update(fusion_consistency_loss.item(), B)
         if isinstance(mil_loss, torch.Tensor) and mil_loss.item() > 0:
             losses_mil.update(mil_loss.item(), B)
         if isinstance(mil_rank_loss, torch.Tensor) and mil_rank_loss.item() > 0:
@@ -753,8 +720,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
                 'Rank': f"{losses_rank.avg:.3f}",
                 'MIL': f"{losses_mil.avg:.3f}",
                 'MILR': f"{losses_mil_rank.avg:.3f}",
-                'VAux': f"{losses_vaux.avg:.3f}",
-                'FCons': f"{losses_fcons.avg:.3f}",
             })
 
     train_loader_tqdm.close()
@@ -769,8 +734,6 @@ def train_new_epo(model, train_loader, criterion_bc, optimizer, epoch, args):
         'batch_rank_loss': losses_rank.avg,
         'mil_evidence_loss': losses_mil.avg,
         'mil_evidence_rank_loss': losses_mil_rank.avg,
-        'visual_aux_loss': losses_vaux.avg,
-        'fusion_consistency_loss': losses_fcons.avg
     }
 
 

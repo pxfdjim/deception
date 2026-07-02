@@ -38,8 +38,6 @@ class Args:
         self.topk_proto_warmup_epochs = 5
         self.use_cluster_topk_mean_pooling = True
         self.cluster_topk_mean_ratio = 0.5
-        self.use_visual_logit_ensemble = True
-        self.visual_logit_ensemble_weight = 0.9
         
         
         # 训练参数
